@@ -64,6 +64,9 @@ protected:
 	
 public:
 	
+	UFUNCTION(BlueprintCallable, Category="Grab Component")
+		void TraceFingersProcedural();
+	
 	// Call this in PostInitializeComponents() of the actor
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		void InitializeGrabComponent(UPrimitiveComponent* InPrimitiveComp, const bool bWasInitializedFromActor = false);

@@ -53,7 +53,7 @@ void UHeistMotionControllerComponent::ConstrainTickGrab(float DeltaTime, FQuat G
 			// Constraints are here.
 			Position = GrabLocation;
 			Orientation = GrabRotation.Rotator();
-			SetRelativeLocationAndRotation(Position, Orientation);
+			SetWorldLocationAndRotation(Position, Orientation);
 			bTracked = true;
 		}
 		else

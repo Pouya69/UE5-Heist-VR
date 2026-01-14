@@ -3,6 +3,7 @@
 #include "HeistGrabComponent.h"
 #include "Player/HeistMotionControllerComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/HeistPlayerInterface.h"
 
 
 UHeistGrabComponent::UHeistGrabComponent()
@@ -13,6 +14,7 @@ UHeistGrabComponent::UHeistGrabComponent()
 	bSimulateOnDrop = true;
 }
 
+
 void UHeistGrabComponent::InitializeGrabComponent(UPrimitiveComponent* InPrimitiveComp, const bool bWasInitializedFromActor)
 {
 	PrimitiveComponent = InPrimitiveComp;
@@ -21,6 +23,24 @@ void UHeistGrabComponent::InitializeGrabComponent(UPrimitiveComponent* InPrimiti
 	
 	PrimitiveComponent->SetSimulatePhysics(true);
 	PrimitiveComponent->SetCollisionProfileName("VR_Grabbable");
+}
+
+void UHeistGrabComponent::TraceFingersProcedural()
+{
+	// Trace for accurate procedural gripping.
+	switch (GetHeldByHand())
+	{
+	case EControllerHand::Right:
+		IHeistPlayerInterface::Execute_TraceRightFinger(CurrentMotionControllerHoldingThis->GetOwner());
+		break;
+		
+	case EControllerHand::Left:
+		IHeistPlayerInterface::Execute_TraceLeftFinger(CurrentMotionControllerHoldingThis->GetOwner());
+		break;
+		
+	default:
+		break;
+	}
 }
 
 UHeistMotionControllerComponent* UHeistGrabComponent::GetCurrentMotionControllerHoldingThis()
@@ -85,6 +105,11 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 	PlayerController->PlayHapticEffect(OnGrabHapticEffect, GetHeldByHand());
 	
 	UGameplayStatics::PlaySoundAtLocation(this, OnGrabSound, GetComponentLocation());
+
+	// Trace for accurate procedural gripping.
+	TraceFingersProcedural();
+	
+	
 	
 	// For custom, we can just use this and bind it there.
 	OnGrabbed.Broadcast(this, MotionController);

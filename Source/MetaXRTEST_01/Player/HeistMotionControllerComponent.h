@@ -37,6 +37,4 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		UHeistGrabComponent* CurrentGrabbedComp;
 	
-
-	
 };
