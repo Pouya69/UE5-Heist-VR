@@ -10,6 +10,8 @@
 
 AHeistDynamite::AHeistDynamite()
 {
+	PrimaryActorTick.bCanEverTick = true;
+	
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	
 	GrabComponent->GrabTypeBase = EGrabTypeBase::SNAP;
@@ -20,6 +22,8 @@ AHeistDynamite::AHeistDynamite()
 void AHeistDynamite::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	
+	if (!GetWorld()->IsGameWorld()) return;
 	
 	OnDestroyed.AddDynamic(this, &AHeistDynamite::Exploded);
 }

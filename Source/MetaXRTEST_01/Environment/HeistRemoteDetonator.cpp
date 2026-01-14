@@ -2,7 +2,7 @@
 #include "HeistRemoteDetonator.h"
 
 #include "HeistDynamite.h"
-#include "MotionControllerComponent.h"
+#include "Player/HeistMotionControllerComponent.h"
 #include "Core/HeistGrabComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -20,7 +20,7 @@ AHeistRemoteDetonator::AHeistRemoteDetonator()
 	
 	HandleGrabComponent = CreateDefaultSubobject<UHeistGrabComponent>(TEXT("HandleGrabComp"));
 	HandleGrabComponent->SetupAttachment(HandleMeshComponent);
-	HandleGrabComponent->GrabTypeBase = EGrabTypeBase::FREE;
+	HandleGrabComponent->GrabTypeBase = EGrabTypeBase::CUSTOM;
 	HandleGrabComponent->InitializeGrabComponent(HandleMeshComponent);
 	HandleGrabComponent->SetSimulateOnDrop(false);
 	HandleGrabComponent->SetPrimitiveComponentPhysicsEnabled(false);
@@ -29,6 +29,8 @@ AHeistRemoteDetonator::AHeistRemoteDetonator()
 	HandleMaximumHeight = 40.0f;
 	HandleIdleHeight = 40.0f;
 	HandleIdleHeightTransitionSpeed = 40.0f;
+	
+	BasePivotOffsetZ = -30.0f;
 	
 	DetonateAfterPushInSeconds = 0.8f;
 	
@@ -39,7 +41,7 @@ void AHeistRemoteDetonator::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
-	if (!ensure(DynamiteLinked))
+	if (GetWorld() && GetWorld()->IsGameWorld() && !ensure(DynamiteLinked))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Detonator %s does not have any Dynamite linked to it! FIX: Set Dynamite Linked in the properties."), *GetName());
 		return;
@@ -57,7 +59,7 @@ void AHeistRemoteDetonator::PostInitializeComponents()
 
 void AHeistRemoteDetonator::Interact_Implementation()
 {
-	SetIsInteractable(false);
+	Execute_SetIsInteractable(this, false);
 	UGameplayStatics::PlaySoundAtLocation(this, InteractSound, GetActorLocation());
 	
 	if (GetWorldTimerManager().IsTimerActive(DetonateTimerHandle)) return;
@@ -88,14 +90,16 @@ void AHeistRemoteDetonator::SetIsInteractable_Implementation(const bool bIsInter
 }
 
 void AHeistRemoteDetonator::OnHandleGrabbed(UHeistGrabComponent* GrabComponentRef,
-                                            UMotionControllerComponent* MotionControllerRef)
+                                            UHeistMotionControllerComponent* MotionControllerRef)
 {
 	SetActorTickEnabled(true);
+	MotionControllerRef->SetComponentTickEnabled(false);
 }
 
 void AHeistRemoteDetonator::OnHandleReleased(UHeistGrabComponent* GrabComponentRef,
-	UMotionControllerComponent* MotionControllerRef)
+	UHeistMotionControllerComponent* MotionControllerRef)
 {
+	MotionControllerRef->SetComponentTickEnabled(true);
 	// We disable the ComponentTick after the idle height has been reached.
 }
 
@@ -108,7 +112,7 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	UMotionControllerComponent* MotionControllerHoldingHandle = HandleGrabComponent->GetCurrentMotionControllerHoldingThis();
+	UHeistMotionControllerComponent* MotionControllerHoldingHandle = HandleGrabComponent->GetCurrentMotionControllerHoldingThis();
 	if (!MotionControllerHoldingHandle)
 	{
 		// Handle is not grabbed
@@ -119,41 +123,57 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 		if (FMath::IsNearlyEqual(HandleLocation.Z, HandleIdleHeight))
 		{
 			// Reached the idle height.
-			SetActorTickEnabled(false);
+			// SetActorTickEnabled(false);
 		}
 		
 		return;
 	}
 	// Handle is grabbed
 	
-	const FTransform HandleTransform = HandleMeshComponent->GetComponentTransform();
+	FVector HandPosition = FVector::ZeroVector;
+	FQuat HandRotation = FQuat::Identity;
+	
+	FTransform BaseTransform = BaseMeshComponent->GetComponentTransform();
 	
 	const FTransform ControllerTransform = MotionControllerHoldingHandle->GetComponentTransform();
 	
-	FTransform ControllerTransformRelativeToHandle = ControllerTransform.GetRelativeTransform(
-		FTransform(HandleTransform.Rotator() + MatchingRotationOffset, HandleTransform.GetTranslation(), HandleTransform.GetScale3D()));
+	FTransform ControllerTransformRelativeToBase = ControllerTransform.GetRelativeTransform(
+		FTransform(BaseTransform.Rotator() + MatchingRotationOffset, BaseTransform.GetTranslation(), BaseTransform.GetScale3D()));
 	
-	const FVector ControllerLocationRelative = ControllerTransformRelativeToHandle.GetTranslation();
+	const FVector BasePivotOffsetVector = FVector(0,0,BasePivotOffsetZ);
+	FVector ControllerLocationRelative = ControllerTransformRelativeToBase.GetTranslation() + BasePivotOffsetVector;
+	
 	
 	const float FinalZ = FMath::Clamp(ControllerLocationRelative.Z, HandleMinimumHeight, HandleMaximumHeight);
-	const FVector FinalHeightVector = HandleTransform.GetTranslation() + 
-		FVector(0.0f, 0.0f, FinalZ);
+	ControllerLocationRelative.Z = FinalZ;
+	UE_LOG(LogTemp, Warning, TEXT("Final Z: %f"), FinalZ);
+	const FVector FinalHeightVector = FVector(0.0f, 0.0f, FinalZ);
+	
+	// MotionControllerHoldingHandle->SetWorldTransform(ControllerTransformRelativeToBase * BaseTransform);
 	HandleMeshComponent->SetRelativeLocation(FinalHeightVector);
 	
-	ControllerTransformRelativeToHandle.SetTranslation(ControllerLocationRelative + FinalHeightVector);
+	ControllerTransformRelativeToBase.SetTranslation(FinalHeightVector - BasePivotOffsetVector);
 	// We set the rotation after so we cannot rotate the hand when it is locked on handle.
-	ControllerTransformRelativeToHandle.SetRotation(HandleHandGrabbingRotationOffset.Quaternion());
+	ControllerTransformRelativeToBase.SetRotation(HandleHandGrabbingRotationOffset.Quaternion());
 	
-	MotionControllerHoldingHandle->SetWorldTransform(ControllerTransformRelativeToHandle * HandleTransform);
+	ControllerTransformRelativeToBase = ControllerTransformRelativeToBase * BaseTransform;
+	
+	HandPosition = ControllerTransformRelativeToBase.GetTranslation();
+	HandRotation = ControllerTransformRelativeToBase.GetRotation();
+	
+	DrawDebugSphere(GetWorld(), HandPosition, 20.f, 10, FColor::Red);
+	
+	MotionControllerHoldingHandle->ConstrainTickGrab(DeltaTime, HandRotation, HandPosition, true);
+	
 	
 	if (bCanDetonate && FMath::IsNearlyEqual(FinalZ, HandleMinimumHeight))
 	{
 		// Handle is at the bottom. Interact.
-		Interact();
+		// Execute_Interact(this);
 	}
-	else if (FMath::IsNearlyEqual(FinalZ, HandleMaximumHeight))
+	else if (!bCanDetonate && FMath::IsNearlyEqual(FinalZ, HandleMaximumHeight))
 	{
 		// Handle is at the top. We recharge so we can interact now.
-		SetIsInteractable(true);
+		Execute_SetIsInteractable(this, true);
 	}
 }

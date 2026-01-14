@@ -1,7 +1,7 @@
 ﻿
 
 #include "HeistGrabComponent.h"
-#include "MotionControllerComponent.h"
+#include "Player/HeistMotionControllerComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -23,7 +23,7 @@ void UHeistGrabComponent::InitializeGrabComponent(UPrimitiveComponent* InPrimiti
 	PrimitiveComponent->SetCollisionProfileName("VR_Grabbable");
 }
 
-UMotionControllerComponent* UHeistGrabComponent::GetCurrentMotionControllerHoldingThis()
+UHeistMotionControllerComponent* UHeistGrabComponent::GetCurrentMotionControllerHoldingThis()
 {
 	return CurrentMotionControllerHoldingThis;
 }
@@ -33,7 +33,7 @@ bool UHeistGrabComponent::IsGrabComponentReady() const
 	return PrimitiveComponent != nullptr;
 }
 
-bool UHeistGrabComponent::AttachPrimitiveCompToMotionController(UMotionControllerComponent* MotionController)
+bool UHeistGrabComponent::AttachPrimitiveCompToMotionController(UHeistMotionControllerComponent* MotionController)
 {
 	if (ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
 	{
@@ -51,7 +51,7 @@ bool UHeistGrabComponent::AttachPrimitiveCompToMotionController(UMotionControlle
 	return false;
 }
 
-bool UHeistGrabComponent::TryGrab(UMotionControllerComponent* MotionController, APlayerController* PlayerController)
+bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController)
 {
 	switch (GrabTypeBase)
 	{
@@ -92,7 +92,7 @@ bool UHeistGrabComponent::TryGrab(UMotionControllerComponent* MotionController, 
 	return true;
 }
 
-bool UHeistGrabComponent::TryRelease(UMotionControllerComponent* MotionController, APlayerController* PlayerController)
+bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController)
 {
 	switch (GrabTypeBase)
 	{
@@ -101,14 +101,18 @@ bool UHeistGrabComponent::TryRelease(UMotionControllerComponent* MotionControlle
 		
 		case EGrabTypeBase::FREE:
 			if (bSimulateOnDrop)
+			{
 				SetPrimitiveComponentPhysicsEnabled(true);
+			}
 			DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 			bIsHeld = false;
 			break;
 		
 		case EGrabTypeBase::SNAP:
 			if (bSimulateOnDrop)
+			{
 				SetPrimitiveComponentPhysicsEnabled(true);
+			}
 			DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 			bIsHeld = false;
 			break;
@@ -138,8 +142,7 @@ void UHeistGrabComponent::SetSimulateOnDrop(const bool bSimulate)
 {
 	if (ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
 	{
-		if (PrimitiveComponent->IsAnySimulatingPhysics())
-			bSimulateOnDrop = bSimulate;
+		bSimulateOnDrop = bSimulate;
 	}
 }
 
@@ -151,7 +154,7 @@ void UHeistGrabComponent::SetPrimitiveComponentPhysicsEnabled(const bool bSimula
 	}
 }
 
-void UHeistGrabComponent::SnapToMotionController(UMotionControllerComponent* MotionController, FVector LocationOffset,
+void UHeistGrabComponent::SnapToMotionController(UHeistMotionControllerComponent* MotionController, FVector LocationOffset,
 	FRotator RotationOffset)
 {
 	FHitResult HitResult_Rotation;
@@ -163,8 +166,10 @@ void UHeistGrabComponent::SnapToMotionController(UMotionControllerComponent* Mot
 	
 }
 
-EControllerHand UHeistGrabComponent::GetHeldByHand() const
+EControllerHand UHeistGrabComponent::GetHeldByHand(UHeistMotionControllerComponent* InMotionController) const
 {
+	if (CurrentMotionControllerHoldingThis == nullptr)
+		return InMotionController->MotionSource.IsEqual("LeftGrip") ? EControllerHand::Left : EControllerHand::Right;
 	return CurrentMotionControllerHoldingThis->MotionSource.IsEqual("LeftGrip") ? EControllerHand::Left : EControllerHand::Right;
 }
 

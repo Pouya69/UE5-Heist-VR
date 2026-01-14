@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Grabbable.h"
+#include "Core/Grabbable.h"
 #include "HeistRemoteDetonator.generated.h"
 
-class UMotionControllerComponent;
+class UHeistMotionControllerComponent;
 class AHeistDynamite;
 
 UCLASS(Abstract)
@@ -56,8 +56,11 @@ protected:
 		float HandleIdleHeightTransitionSpeed;
 	
 	// When hand is locked on handle, what is the offset.
-	UPROPERTY(EditDefaultsOnly, Category="Handle")
+	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
 		FRotator HandleHandGrabbingRotationOffset;
+	
+	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
+		float BasePivotOffsetZ;
 	
 	// After how long, the dynamite will explode. If <= 0, it will be instant.
 	UPROPERTY(EditAnywhere, Category="Detonate")
@@ -71,10 +74,10 @@ protected:
 	virtual void SetIsInteractable_Implementation(const bool bIsInteractable) override;
 	
 	UFUNCTION()
-		void OnHandleGrabbed(UHeistGrabComponent* GrabComponentRef, UMotionControllerComponent* MotionControllerRef);
+		void OnHandleGrabbed(UHeistGrabComponent* GrabComponentRef, UHeistMotionControllerComponent* MotionControllerRef);
 	
 	UFUNCTION()
-		void OnHandleReleased(UHeistGrabComponent* GrabComponentRef, UMotionControllerComponent* MotionControllerRef);
+		void OnHandleReleased(UHeistGrabComponent* GrabComponentRef, UHeistMotionControllerComponent* MotionControllerRef);
 	
 	UFUNCTION(BlueprintCallable, Category="Detonate")
 		void Detonate();

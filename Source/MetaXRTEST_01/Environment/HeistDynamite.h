@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Grabbable.h"
+#include "Core/Grabbable.h"
 #include "HeistDynamite.generated.h"
 
 class USphereComponent;
