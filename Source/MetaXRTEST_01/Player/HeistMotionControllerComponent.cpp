@@ -40,6 +40,17 @@ void UHeistMotionControllerComponent::TickComponent(float DeltaTime, ELevelTick 
 	// ConstrainTickGrab(DeltaTime, FQuat::Identity);
 }
 
+void UHeistMotionControllerComponent::InitializeMotionControllerComponent(USkeletalMeshComponent* InPhysicsHand, USkeletalMeshComponent* InGhostHand)
+{
+	PhysicsHandRef = InPhysicsHand;
+	GhostHandRef = InGhostHand;
+}
+
+bool UHeistMotionControllerComponent::IsMotionControllerReady() const
+{
+	return PhysicsHandRef != nullptr && GhostHandRef != nullptr;
+}
+
 void UHeistMotionControllerComponent::ConstrainTickGrab(float DeltaTime, FQuat GrabRotation, FVector GrabLocation, bool bIsConstrained)
 {
 	if (IsActive())

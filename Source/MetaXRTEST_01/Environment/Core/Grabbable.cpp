@@ -3,7 +3,8 @@
 
 #include "Grabbable.h"
 
-#include "Core/HeistGrabComponent.h"
+#include "Environment/Core/HeistGrabComponent.h"
+
 
 AGrabbable::AGrabbable()
 {

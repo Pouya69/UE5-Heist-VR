@@ -16,7 +16,7 @@ AHeistDynamite::AHeistDynamite()
 	
 	GrabComponent->GrabTypeBase = EGrabTypeBase::SNAP;
 	
-	ExplosionTimerInSeconds = 5.0f;
+	ExplosionTimerInSeconds = 0.5f;
 }
 
 void AHeistDynamite::PostInitializeComponents()

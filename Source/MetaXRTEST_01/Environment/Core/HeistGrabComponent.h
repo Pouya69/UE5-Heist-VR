@@ -13,6 +13,7 @@ enum class EGrabTypeBase : uint8
 	NONE,
 	FREE,
 	SNAP,
+	TWO_HANDED,
 	CUSTOM
 };
 
@@ -22,6 +23,7 @@ class APlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrabbed, UHeistGrabComponent*, GrabComponent, UHeistMotionControllerComponent*, MotionControllerRef);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReleased, UHeistGrabComponent*, GrabComponent, UHeistMotionControllerComponent*, MotionControllerRef);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGrabbedTwoHanded, UHeistGrabComponent*, GrabComponentGrabbedLast, UHeistGrabComponent*, GrabComponentGrabbedFirst, UHeistMotionControllerComponent*, MotionControllerRef);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -34,6 +36,8 @@ public:
 
 protected:
 	
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
 	// HAS TO BE SET USING: InitializeGrabComponent()
 	UPROPERTY(BlueprintReadOnly, Category="Grab Component | OtherComponents")
 		TObjectPtr<UPrimitiveComponent> PrimitiveComponent;
@@ -44,11 +48,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
 		bool bSimulateOnDrop;
 	
+	// We by default should be attaching it to the Physics Hands.
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool AttachPrimitiveCompToMotionController(UHeistMotionControllerComponent* MotionController);
+		bool AttachPrimitiveCompTo(USceneComponent* AttachTo);
 	
 	UPROPERTY(BlueprintReadOnly, Category="Grab Component")
 		bool bIsHeld;
+	
+	// For Two-Handed ONLY
+	UPROPERTY(BlueprintReadOnly, Category="Grab Component | Two Handed")
+		TObjectPtr<UHeistGrabComponent> OtherGrabComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
 		TObjectPtr<UHapticFeedbackEffect_Base> OnGrabHapticEffect;
@@ -64,12 +73,19 @@ protected:
 	
 public:
 	
+	// No movement can be done. Only the hand gets stuck to the component.
+	UFUNCTION(BlueprintCallable, Category="Grab Component | Two Handed")
+		void AttachHandToGrabComponent(bool bAttach, UHeistMotionControllerComponent* MotionControllerRef);
+	
+	UPROPERTY(BlueprintReadOnly, Category="Grab Component | Two Handed")
+		FVector GrabLocationCache;
+	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		void TraceFingersProcedural();
 	
 	// Call this in PostInitializeComponents() of the actor
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		void InitializeGrabComponent(UPrimitiveComponent* InPrimitiveComp, const bool bWasInitializedFromActor = false);
+		void InitializeGrabComponent(UPrimitiveComponent* InPrimitiveComp, const bool bWasInitializedFromActor = false, UHeistGrabComponent* OtherGrabComponentForTwoHanded = nullptr);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		UHeistMotionControllerComponent* GetCurrentMotionControllerHoldingThis();
@@ -77,8 +93,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		bool IsGrabComponentReady() const;
 	
+	// Checks if the other grab component is being held so it knows it is ready to grab fully. ONLY FOR TWO HANDED.
+	UFUNCTION(BlueprintCallable, Category="Grab Component | Two Handed")
+		bool IsReadyToGrab() const;
+	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool TryGrab(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController);
+		bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController);
@@ -88,6 +108,9 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category="Grab Component")
 		FOnReleased OnReleased;
+	
+	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category="Grab Component | Two Handed")
+		FOnGrabbedTwoHanded OnGrabbedTwoHanded;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		void SetSimulateOnDrop(const bool bSimulate);
@@ -99,7 +122,7 @@ public:
 		EGrabTypeBase GrabTypeBase;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		void SnapToMotionController(UHeistMotionControllerComponent* MotionController, FVector LocationOffset = FVector::ZeroVector, FRotator RotationOffset = FRotator::ZeroRotator);
+		void SnapTo(USceneComponent* AttachTo, FVector LocationOffset = FVector::ZeroVector, FRotator RotationOffset = FRotator::ZeroRotator);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		EControllerHand GetHeldByHand(UHeistMotionControllerComponent* InMotionController = nullptr) const;

@@ -57,6 +57,10 @@ protected:
 	
 	// When hand is locked on handle, what is the offset.
 	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
+		FVector HandleHandGrabbingLocationOffset;
+	
+	// When hand is locked on handle, what is the offset.
+	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
 		FRotator HandleHandGrabbingRotationOffset;
 	
 	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
@@ -82,7 +86,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Detonate")
 		void Detonate();
 	
-	
+	// If Dist > MaxDistanceBetweenControllerAndPhysicsHand, we stop holding the handle.
+	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
+		float MaxDistanceBetweenControllerAndPhysicsHand;
 	
 public:
 	virtual void Tick(float DeltaTime) override;

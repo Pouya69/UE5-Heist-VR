@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "HeistPlayerInterface.generated.h"
 
+enum class EHeistPlayerSize : uint8;
+
 UINTERFACE()
 class UHeistPlayerInterface : public UInterface
 {
@@ -22,4 +24,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void TraceLeftFinger();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface | Procedural Animation")
+		bool GetProceduralFingersAnimData();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void SetupBonePhysicsAndWeightLeftHand_CPP(FName RootBoneName, bool bSimulate);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void SetupBonePhysicsAndWeightRightHand_CPP(FName RootBoneName, bool bSimulate);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void ChangeSize(EHeistPlayerSize PlayerSize);
 };
