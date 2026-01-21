@@ -37,6 +37,8 @@ protected:
 	
 	virtual void PostInitializeComponents() override;
 	
+	bool bIsInvertedForwardAndRight;
+	
 	FRotator MatchingRotationOffset;
 	
 	// The maximum the handle can go inside the detonator.

@@ -41,10 +41,7 @@ protected:
 	// HAS TO BE SET USING: InitializeGrabComponent()
 	UPROPERTY(BlueprintReadOnly, Category="Grab Component | OtherComponents")
 		TObjectPtr<UPrimitiveComponent> PrimitiveComponent;
-	
-	UPROPERTY(BlueprintReadOnly, Category="Grab Component | OtherComponents")
-		TObjectPtr<UHeistMotionControllerComponent> CurrentMotionControllerHoldingThis;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
 		bool bSimulateOnDrop;
 	
@@ -72,6 +69,9 @@ protected:
 		TObjectPtr<USoundBase> OnReleaseSound;
 	
 public:
+		
+	UPROPERTY(BlueprintReadWrite, Category="Grab Component | OtherComponents")
+		TObjectPtr<UHeistMotionControllerComponent> CurrentMotionControllerHoldingThis;
 	
 	// No movement can be done. Only the hand gets stuck to the component.
 	UFUNCTION(BlueprintCallable, Category="Grab Component | Two Handed")

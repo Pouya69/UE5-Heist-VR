@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "Player/HeistMotionControllerComponent.h"
+#include "Player/HeistPlayerInterface.h"
 
 static TAutoConsoleVariable<bool> CVarDoorOpen(TEXT("game.doors.TestDoorOpen"), false, TEXT("Toggles on Close and Open a door."), ECVF_Cheat);
 static TAutoConsoleVariable<bool> CVarDebugDrawHandleAndHandRelation(TEXT("game.doors.DebugDrawHandleAndHandRelation"), false, TEXT("Toggles on the debug drawing of hands and handle properties."), ECVF_Cheat);
@@ -73,6 +74,7 @@ void ADoor::PostInitializeComponents()
 	DoorClosedRotation = DoorMeshComponent->GetComponentQuat();  // Door has to be closed at the start.
 	
 	GrabComponent->OnGrabbed.AddDynamic(this, &ADoor::OnDoorHandleGrabbed);
+	GrabComponent->OnReleased.AddDynamic(this, &ADoor::OnDoorHandleReleased);
 	
 }
 
@@ -83,7 +85,25 @@ void ADoor::OnDoorHandleGrabbed(UHeistGrabComponent* GrabbedComponent,
 	
 	// We start ticking to check for handle rotation.
 	
+	bIsHandOnHandle = true;
+	
 	SetActorTickEnabled(true);
+	
+	if (GrabbedComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false);
+	else
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false);
+}
+
+void ADoor::OnDoorHandleReleased(UHeistGrabComponent* GrabbedComponent,
+	UHeistMotionControllerComponent* MotionControllerRef)
+{
+	bIsHandOnHandle = false;
+	
+	if (GrabbedComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true);
+	else
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
 }
 
 bool ADoor::IsDoorOpen() const
@@ -97,6 +117,8 @@ void ADoor::Tick(float DeltaTime)
 	
 	// UE_LOG(LogTemp, Warning, TEXT("Door Tick"));
 	
+	if (!bIsHandOnHandle)
+		HandleAnchorComponent->SetRelativeRotation(FMath::RInterpConstantTo(HandleAnchorComponent->GetRelativeTransform().GetRotation().Rotator(), FRotator::ZeroRotator, DeltaTime, 20.f));
 	
 	if (!CVarDoorOpen.GetValueOnGameThread() && !CanDoorTick())
 	{
@@ -125,9 +147,10 @@ void ADoor::Tick(float DeltaTime)
 	
 	FTransform ControllerTransformRelativeToAnchor = ControllerTransform.GetRelativeTransform(HandleAnchorTransform);
 	
-	const float FinalHandleAndHandPitchRotation = ControllerTransform.Rotator().Pitch;
+	const float FinalHandleAndHandPitchRotation = GrabComponent->GetHeldByHand() == EControllerHand::Left ? ControllerTransformRelativeToAnchor.GetRotation().Rotator().Pitch
+	: -ControllerTransformRelativeToAnchor.GetRotation().Rotator().Pitch;
 	
-	bIsHandlePushedDown = FinalHandleAndHandPitchRotation >= DoorOpenTriggerHandleThresholdPitch;  // For being able to.
+	bIsHandlePushedDown = FinalHandleAndHandPitchRotation <= DoorOpenTriggerHandleThresholdPitch;  // For being able to.
 	
 	if (bIsHandlePushedDown && !IsDoorOpen())
 	{
@@ -139,28 +162,30 @@ void ADoor::Tick(float DeltaTime)
 	
 	HandleAnchorComponent->SetRelativeRotation(FinalRotationHandle, true, nullptr, ETeleportType::TeleportPhysics);
 	
-	ControllerTransformRelativeToAnchor.SetRotation((FinalRotationHandle + DoorHandleHandRotationOffset).Quaternion());
 	ControllerTransformRelativeToAnchor.SetLocation(DoorHandleHandLocationOffset);
+	ControllerTransformRelativeToAnchor.SetRotation(DoorHandleHandRotationOffset.Quaternion());
+
 	
 	ControllerTransformRelativeToAnchor = ControllerTransformRelativeToAnchor * HandleAnchorTransform;
-	
 	
 	const FVector HandPosition = ControllerTransformRelativeToAnchor.GetTranslation();
 	const FQuat HandRotation = ControllerTransformRelativeToAnchor.GetRotation();
 	
-	if (FVector::Dist(ControllerTransform.GetLocation(), HandPosition) < MaxDistanceBetweenPhysicsHandAndMotionController)
+	if (FVector::Dist(ControllerTransform.GetLocation(), HandPosition) > MaxDistanceBetweenPhysicsHandAndMotionController)
 	{
 		// Detach the hand due to the motion controller being too far from the supposed location.
-		GrabComponent->TryRelease(MotionControllerHoldingHandle, UGameplayStatics::GetPlayerController(this, 0));
+		if (GrabComponent->IsBeingHeld())
+			GrabComponent->TryRelease(MotionControllerHoldingHandle, UGameplayStatics::GetPlayerController(this, 0));
 		return;
 	}
 	
 	if (CVarDebugDrawHandleAndHandRelation.GetValueOnGameThread())
 	{
 		DrawDebugBox(GetWorld(), HandPosition, FVector(5,5,5), HandRotation, FColor::Green);
+		DrawDebugDirectionalArrow(GetWorld(), HandPosition, ControllerTransform.GetLocation(), 15.f, FColor::Yellow);
 	}
 	
-	MotionControllerHoldingHandle->PhysicsHandRef->SetWorldLocationAndRotation(ControllerTransformRelativeToAnchor.GetTranslation(), ControllerTransformRelativeToAnchor.GetRotation());
+	MotionControllerHoldingHandle->PhysicsHandRef->SetWorldLocationAndRotation(HandPosition, HandRotation, true, nullptr, ETeleportType::ResetPhysics);
 	
 	
 	

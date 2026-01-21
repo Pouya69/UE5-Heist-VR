@@ -133,6 +133,12 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 	if (!ensureMsgf(MotionController->IsMotionControllerReady(), TEXT("Motion Controller is not initialized. FIX: Do InitializeMotionControllerComponent() in BP.")))
 		return false;
 	
+	if (IsBeingHeld())
+	{
+		// Already being held.
+		TryRelease(nullptr, PlayerController);
+	}
+	
 	switch (GrabTypeBase)
 	{
 		case EGrabTypeBase::NONE:
@@ -236,9 +242,13 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 	}
 	
 	// Still haven't released.
-	if (bIsHeld) return false;
+	if (bIsHeld)
+	{
+		return false;
+	}
 	
-	PlayerController->PlayHapticEffect(OnReleaseHapticEffect, GetHeldByHand(CurrentMotionControllerHoldingThis));
+	if (CurrentMotionControllerHoldingThis)
+		PlayerController->PlayHapticEffect(OnReleaseHapticEffect, GetHeldByHand(CurrentMotionControllerHoldingThis));
 	CurrentMotionControllerHoldingThis = nullptr;
 	
 	UGameplayStatics::PlaySoundAtLocation(this, OnReleaseSound, GetComponentLocation());
@@ -279,8 +289,8 @@ void UHeistGrabComponent::SnapTo(USceneComponent* AttachTo, FVector LocationOffs
 EControllerHand UHeistGrabComponent::GetHeldByHand(UHeistMotionControllerComponent* InMotionController) const
 {
 	if (CurrentMotionControllerHoldingThis == nullptr)
-		return InMotionController->MotionSource.IsEqual("LeftGrip") ? EControllerHand::Left : EControllerHand::Right;
-	return CurrentMotionControllerHoldingThis->MotionSource.IsEqual("LeftGrip") ? EControllerHand::Left : EControllerHand::Right;
+		return InMotionController->MotionSource.IsEqual("Left") ? EControllerHand::Left : EControllerHand::Right;
+	return CurrentMotionControllerHoldingThis->MotionSource.IsEqual("Left") ? EControllerHand::Left : EControllerHand::Right;
 }
 
 bool UHeistGrabComponent::IsBeingHeld() const

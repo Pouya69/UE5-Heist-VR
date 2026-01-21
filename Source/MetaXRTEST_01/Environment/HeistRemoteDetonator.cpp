@@ -97,28 +97,52 @@ void AHeistRemoteDetonator::SetIsInteractable_Implementation(const bool bIsInter
 void AHeistRemoteDetonator::OnHandleGrabbed(UHeistGrabComponent* GrabComponentRef,
                                             UHeistMotionControllerComponent* MotionControllerRef)
 {
-	SetActorTickEnabled(true);
-	if (GrabComponentRef->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false);
-	else
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false);
+	
+	if (GrabComponentRef == HandleGrabComponent)
+	{
+		SetActorTickEnabled(true);
+		if (GrabComponentRef->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+		{
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false);
+		}
+		else
+		{
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false);
+		}
+		
+		const float DotForwardHand = MotionControllerRef->GhostHandRef->GetRightVector().Dot(HandleGrabComponent->GetForwardVector());
+		const float DotRightHand = MotionControllerRef->GhostHandRef->GetForwardVector().Dot(-HandleGrabComponent->GetRightVector());
+		
+		bIsInvertedForwardAndRight = DotForwardHand < 0 && DotRightHand < 0;
+		
+		UE_LOG(LogTemp, Warning, TEXT("Fwd: %f, Right: %f,s Inverted: %d"), DotForwardHand, DotRightHand, bIsInvertedForwardAndRight ? 1 : 0);
+	}
 	// MotionControllerRef->SetComponentTickEnabled(false);
 }
 
 void AHeistRemoteDetonator::OnHandleReleased(UHeistGrabComponent* GrabComponentRef,
 	UHeistMotionControllerComponent* MotionControllerRef)
 {
-	if (GrabComponentRef->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true);
-	else
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
+	if (GrabComponentRef == HandleGrabComponent)
+	{
+		HandleGrabComponent->CurrentMotionControllerHoldingThis = nullptr;
+		
+		if (GrabComponentRef->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true);
+		else
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
+		
+	}
+
+	
 	// MotionControllerRef->SetComponentTickEnabled(true);
 	// We disable the ComponentTick after the idle height has been reached.
 }
 
 void AHeistRemoteDetonator::Detonate()
 {
-	DynamiteLinked->StartExplosion();
+	if (DynamiteLinked)
+		DynamiteLinked->StartExplosion();
 }
 
 void AHeistRemoteDetonator::Tick(float DeltaTime)
@@ -131,9 +155,9 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 		// Handle is not grabbed or the base is not grabbed.
 		FVector HandleLocation = HandleMeshComponent->GetRelativeLocation();
 		HandleLocation.Z = FMath::FInterpConstantTo(HandleLocation.Z, HandleIdleHeight, DeltaTime, HandleIdleHeightTransitionSpeed);
-		HandleMeshComponent->SetRelativeLocation(HandleLocation);
+		HandleMeshComponent->SetRelativeLocation(HandleLocation, true, nullptr, ETeleportType::ResetPhysics);
 		
-		if (FMath::IsNearlyEqual(HandleLocation.Z, HandleIdleHeight))
+		if (FMath::IsNearlyEqual(HandleLocation.Z, HandleIdleHeight, 0.01f))
 		{
 			// Reached the idle height.
 			SetActorTickEnabled(false);
@@ -142,9 +166,26 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 		return;
 	}
 	
+	
+	
 	if (!GrabComponent->IsBeingHeld())
 	{
 		// Handle is being held but not the base.
+		HandleMeshComponent->SetRelativeLocation(FVector(0, 0, HandleIdleHeight), true, nullptr, ETeleportType::ResetPhysics);
+		SetActorTickEnabled(false);
+		HandleGrabComponent->TryRelease(MotionControllerHoldingHandle, UGameplayStatics::GetPlayerController(this, 0));
+		GrabComponent->TryRelease(nullptr, UGameplayStatics::GetPlayerController(this, 0));
+		return;
+	}
+	
+	
+	
+	const float DotForwardHand = MotionControllerHoldingHandle->GhostHandRef->GetRightVector().Dot(HandleGrabComponent->GetForwardVector());
+	const float DotRightHand = MotionControllerHoldingHandle->GhostHandRef->GetForwardVector().Dot(-HandleGrabComponent->GetRightVector());
+	
+	if (bIsInvertedForwardAndRight != (DotForwardHand < 0 && DotRightHand < 0))
+	{
+		// Inverted we drop.
 		HandleGrabComponent->TryRelease(MotionControllerHoldingHandle, UGameplayStatics::GetPlayerController(this, 0));
 		return;
 	}
@@ -167,16 +208,28 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 	
 	const float FinalZ = FMath::Clamp(ControllerLocationRelative.Z, HandleMinimumHeight, HandleMaximumHeight);
 	ControllerLocationRelative.Z = FinalZ;
-	UE_LOG(LogTemp, Warning, TEXT("Final Z: %f"), FinalZ);
 	const FVector FinalHeightVector = FVector(0.0f, 0.0f, FinalZ);
 	
-	ControllerTransformRelativeToBase.SetTranslation(FinalHeightVector - BasePivotOffsetVector + HandleHandGrabbingLocationOffset);
-	// We set the rotation after so we cannot rotate the hand when it is locked on handle.
-	ControllerTransformRelativeToBase.SetRotation(HandleHandGrabbingRotationOffset.Quaternion());
+	if (bIsInvertedForwardAndRight)
+	{
+		ControllerTransformRelativeToBase.SetTranslation(FinalHeightVector - BasePivotOffsetVector + FVector(-HandleHandGrabbingLocationOffset.X, -HandleHandGrabbingLocationOffset.Y, HandleHandGrabbingLocationOffset.Z));
+		ControllerTransformRelativeToBase.SetRotation((FRotator(0.f,180.f,0.f) + HandleHandGrabbingRotationOffset).Quaternion());
+	}
+	else
+	{
+		ControllerTransformRelativeToBase.SetTranslation(FinalHeightVector - BasePivotOffsetVector + HandleHandGrabbingLocationOffset);
+		ControllerTransformRelativeToBase.SetRotation(HandleHandGrabbingRotationOffset.Quaternion());
+	}
 	
 	ControllerTransformRelativeToBase = ControllerTransformRelativeToBase * BaseTransform;  // Convert it to world.
 	
 	HandPosition = ControllerTransformRelativeToBase.GetTranslation();
+	
+	
+	
+	// const float RotationDifference = HandRotationRelevant.AngularDistance(MotionControllerHoldingHandle->GhostHandRef->GetComponentQuat());
+	// UE_LOG(LogTemp, Warning, TEXT("Rotation Difference. %f"), RotationDifference);
+	
 	
 	if (FVector::Dist(HandPosition, ControllerTransform.GetTranslation()) > MaxDistanceBetweenControllerAndPhysicsHand)
 	{
@@ -188,6 +241,7 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 	
 	HandleMeshComponent->SetRelativeLocation(FinalHeightVector);
 	
+	
 	HandRotation = ControllerTransformRelativeToBase.GetRotation();
 	
 	if (CVar_DrawGrabDebug.GetValueOnGameThread())
@@ -196,7 +250,7 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 	}
 	
 	
-	MotionControllerHoldingHandle->PhysicsHandRef->SetWorldLocationAndRotation(HandPosition, HandRotation);
+	MotionControllerHoldingHandle->PhysicsHandRef->SetWorldLocationAndRotation(HandPosition, HandRotation, false, nullptr, ETeleportType::ResetPhysics);
 	
 	// MotionControllerHoldingHandle->ConstrainTickGrab(DeltaTime, HandRotation, HandPosition, true);
 	

@@ -71,6 +71,9 @@ protected:
 	UFUNCTION()
 		void OnDoorHandleGrabbed(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);
 	
+	UFUNCTION()
+		void OnDoorHandleReleased(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);
+	
 	bool bIsDoorOpen = false;
 
 public:
