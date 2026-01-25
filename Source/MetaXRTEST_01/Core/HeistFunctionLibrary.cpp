@@ -12,32 +12,47 @@ bool UHeistFunctionLibrary::GetGrabComponents(AActor* Actor, TArray<UHeistGrabCo
 	return IHeistInteractionInterface::Execute_GetGrabComponents(Actor, OutGrabComponents);
 }
 
-bool UHeistFunctionLibrary::IsGlobalTimeDilationTemporary(const FTimerHandle& GlobalTimeDilationTimerHandle, UWorld* World)
+bool UHeistFunctionLibrary::IsGlobalTimeDilationTemporary(const FTimerHandle& GlobalTimeDilationTimerHandle, AActor* WorldReference)
 {
-	return World->GetTimerManager().IsTimerActive(GlobalTimeDilationTimerHandle);
+	return WorldReference->GetWorld()->GetTimerManager().IsTimerActive(GlobalTimeDilationTimerHandle);
 }
 
-bool UHeistFunctionLibrary::SetTimeDilationOfEveryone(FTimerHandle& GlobalTimeDilationTimerHandle, UWorld* World, const float DilationAmount, const float AudioPitchDilation, const float Duration)
+bool UHeistFunctionLibrary::SetTimeDilationOfEveryone(FTimerHandle& GlobalTimeDilationTimerHandle, AActor* WorldReference, const float DilationAmount, const float AudioPitchDilation, const float Duration)
 {
-	World->GetTimerManager().ClearTimer(GlobalTimeDilationTimerHandle);
+	UWorld* ObjectWorld = WorldReference->GetWorld();
+	ObjectWorld->GetTimerManager().ClearTimer(GlobalTimeDilationTimerHandle);
 	
 	// Instant
-	UGameplayStatics::SetGlobalPitchModulation(World, AudioPitchDilation, 0.0f);
-	UGameplayStatics::SetGlobalTimeDilation(World, DilationAmount);
+	UGameplayStatics::SetGlobalPitchModulation(ObjectWorld, AudioPitchDilation, 0.0f);
+	UGameplayStatics::SetGlobalTimeDilation(ObjectWorld, DilationAmount);
 	
 	if (Duration > 0.0f)
 	{
+		FTimerHandle NewGlobalTimeDilationTimerHandle;
 		// Timer based to go back to normal.
 		
 		FTimerDelegate Delegate;
-		Delegate.BindLambda([&]()
+		Delegate.BindLambda([ObjectWorld, Duration]()
 		{
-			UGameplayStatics::SetGlobalPitchModulation(World, 1.f, Duration / 2);
-			UGameplayStatics::SetGlobalTimeDilation(World, 0.0f);
+			UGameplayStatics::SetGlobalPitchModulation(ObjectWorld, 1.f, Duration / 2);
+			UGameplayStatics::SetGlobalTimeDilation(ObjectWorld, 1.0f);
 		});
 		
-		World->GetTimerManager().SetTimer(GlobalTimeDilationTimerHandle, Delegate, Duration, false);
+		ObjectWorld->GetTimerManager().SetTimer(GlobalTimeDilationTimerHandle, Delegate, Duration, false);
+		GlobalTimeDilationTimerHandle = NewGlobalTimeDilationTimerHandle;
 	}
+	return true;
+}
+
+bool UHeistFunctionLibrary::RestoreTimeToNormal(AActor* WorldReference, FTimerHandle& GlobalTimeDilationTimerHandle, const float AudioRestoreDuration)
+{
+	if (WorldReference == nullptr) return false;
+	UWorld* World =  WorldReference->GetWorld();
+	if (!World->GetTimerManager().IsTimerActive(GlobalTimeDilationTimerHandle)) return false;
+	
+	World->GetTimerManager().ClearTimer(GlobalTimeDilationTimerHandle);
+	UGameplayStatics::SetGlobalPitchModulation(World, 1.f, AudioRestoreDuration / 2);
+	UGameplayStatics::SetGlobalTimeDilation(World, 1.0f);
 	
 	return true;
 }

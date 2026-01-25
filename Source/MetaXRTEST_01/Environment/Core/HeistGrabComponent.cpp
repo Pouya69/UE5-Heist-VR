@@ -168,10 +168,10 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 				// Grabbed two-handed fully.
 				// We detach the hands and then attach the object to them.
 				
-				AttachPrimitiveCompTo(AttachTo);
+				// AttachPrimitiveCompTo(AttachTo);
 				
-				// AttachHandToGrabComponent(false, MotionController);
-				// OtherGrabComponent->AttachHandToGrabComponent(false, OtherGrabComponent->GetCurrentMotionControllerHoldingThis());
+				AttachHandToGrabComponent(false, MotionController);
+				OtherGrabComponent->AttachHandToGrabComponent(false, OtherGrabComponent->GetCurrentMotionControllerHoldingThis());
 				
 			}
 			else
