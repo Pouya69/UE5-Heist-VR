@@ -118,8 +118,12 @@ void ADoor::Tick(float DeltaTime)
 	// UE_LOG(LogTemp, Warning, TEXT("Door Tick"));
 	
 	if (!bIsHandOnHandle)
-		HandleAnchorComponent->SetRelativeRotation(FMath::RInterpConstantTo(HandleAnchorComponent->GetRelativeTransform().GetRotation().Rotator(), FRotator::ZeroRotator, DeltaTime, 20.f));
+	{
+		// HandleAnchorComponent->SetRelativeRotation(FMath::RInterpConstantTo(HandleAnchorComponent->GetRelativeTransform().GetRotation().Rotator(), FRotator::ZeroRotator, DeltaTime, 20.f));
+		return;
+	}
 	
+	/*
 	if (!CVarDoorOpen.GetValueOnGameThread() && !CanDoorTick())
 	{
 		// Door should be closed. (When debugging the door, we disable this functionality at least)
@@ -128,6 +132,7 @@ void ADoor::Tick(float DeltaTime)
 		OpenCloseDoor(false);
 		return;
 	}
+	*/
 	
 	
 	
@@ -198,9 +203,10 @@ bool ADoor::CanDoorRotate() const
 
 bool ADoor::CanDoorTick() const
 {
-	const float Difference = FMath::Abs(FMath::Abs(DoorClosedRotation.Rotator().Yaw) - FMath::Abs(DoorMeshComponent->GetComponentQuat().Rotator().Yaw));
+	if (bIsHandOnHandle) return true;
 	
-	return bIsHandOnHandle || !FMath::IsNearlyZero(Difference, DoorClosedDifferenceYawThreshold);
+	const float Difference = FMath::Abs(FMath::Abs(DoorClosedRotation.Rotator().Yaw) - FMath::Abs(DoorMeshComponent->GetComponentQuat().Rotator().Yaw));
+	return !FMath::IsNearlyZero(Difference, DoorClosedDifferenceYawThreshold);
 }
 
 void ADoor::Interact_Implementation()

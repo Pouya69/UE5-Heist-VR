@@ -118,6 +118,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		void SetPrimitiveComponentPhysicsEnabled(const bool bSimulate);
 	
+	UPrimitiveComponent* GetPrimitiveComponentAttached() const;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
 		EGrabTypeBase GrabTypeBase;
 	

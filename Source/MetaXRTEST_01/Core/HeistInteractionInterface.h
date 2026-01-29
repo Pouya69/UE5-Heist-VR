@@ -34,6 +34,16 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		bool GetGrabComponents(TArray<UHeistGrabComponent*>& OutGrabComponents);
 	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		bool IsRemoteGrabbable() const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		bool RemoteGrab();
+	
+	virtual bool IsRemoteGrabbable_Implementation() const;
+	
+	
+	
 	// Used for when object is not actually placed and the green / red outline is being showed.
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void SetIsInPreviewMode(const bool bIsInFocus);

@@ -114,7 +114,9 @@ bool UHeistGrabComponent::AttachPrimitiveCompTo(USceneComponent* AttachTo)
 {
 	if (ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
 	{
-		const bool bAttached = PrimitiveComponent->AttachToComponent(AttachTo, FAttachmentTransformRules::KeepWorldTransform);
+		
+		const bool bAttached = PrimitiveComponent->AttachToComponent(AttachTo, 
+			FAttachmentTransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld,EAttachmentRule::KeepWorld, true));
 		
 		if (!bAttached)
 		{
@@ -147,6 +149,7 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 		case EGrabTypeBase::FREE:
 			SetPrimitiveComponentPhysicsEnabled(false);
 			AttachPrimitiveCompTo(AttachTo);
+			// SetPrimitiveComponentPhysicsEnabled(true);
 			bIsHeld = true;
 			break;
 		
@@ -154,6 +157,7 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 			SetPrimitiveComponentPhysicsEnabled(false);
 			AttachPrimitiveCompTo(AttachTo);
 			SnapTo(MotionController);
+			// SetPrimitiveComponentPhysicsEnabled(true);
 			bIsHeld = true;
 			break;
 		
@@ -274,8 +278,13 @@ void UHeistGrabComponent::SetPrimitiveComponentPhysicsEnabled(const bool bSimula
 	}
 }
 
+UPrimitiveComponent* UHeistGrabComponent::GetPrimitiveComponentAttached() const
+{
+	return PrimitiveComponent;
+}
+
 void UHeistGrabComponent::SnapTo(USceneComponent* AttachTo, FVector LocationOffset,
-	FRotator RotationOffset)
+                                 FRotator RotationOffset)
 {
 	FHitResult HitResult_Rotation;
 	FHitResult HitResult_Location;

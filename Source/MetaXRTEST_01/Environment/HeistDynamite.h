@@ -6,6 +6,7 @@
 #include "Core/Grabbable.h"
 #include "HeistDynamite.generated.h"
 
+class URadialForceComponent;
 class USphereComponent;
 class UNiagaraSystem;
 
@@ -22,6 +23,8 @@ protected:
 	FTimerHandle ExplosionTimerHandle;
 	
 	virtual void PostInitializeComponents() override;
+	
+	
 	
 	UFUNCTION(BlueprintCallable, Category = "HeistDynamite")
 		void Exploded(AActor* DestroyedActor);
@@ -41,6 +44,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Lock")
 		TObjectPtr<USoundBase> LockPositionSound;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		TObjectPtr<URadialForceComponent> RadialForceComponent;
+	
 	void StartExplosion_Implementation();
 	
 	virtual void SetIsInteractable_Implementation(const bool bIsInteractable) override;
@@ -57,5 +63,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Dynamite")
 		void LockToPosition(FVector Position);
+	
+	virtual bool IsRemoteGrabbable_Implementation() const override;
 	
 };

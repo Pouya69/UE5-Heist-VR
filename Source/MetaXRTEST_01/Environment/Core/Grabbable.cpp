@@ -21,6 +21,30 @@ AGrabbable::AGrabbable()
 	GrabComponent->GrabTypeBase = EGrabTypeBase::FREE;
 }
 
+void AGrabbable::SetIsInFocus_Implementation(const bool bIsInFocus)
+{
+	TArray<UHeistGrabComponent*> GrabComponents;
+	Execute_GetGrabComponents(this, GrabComponents);
+
+	for (UHeistGrabComponent* TempGrabComponent : GrabComponents)
+	{
+		Cast<UMeshComponent>(TempGrabComponent->GetPrimitiveComponentAttached())->SetOverlayMaterial(bIsInFocus ? InFocusMaterial : nullptr);
+	}
+}
+
+bool AGrabbable::IsRemoteGrabbable_Implementation() const
+{
+	return !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
+}
+
+bool AGrabbable::RemoteGrab_Implementation()
+{
+	Execute_SetIsInFocus(this, false);
+	GetWorldTimerManager().SetTimer(RemoteGrabTimerHandle, 1.8f, false);
+	
+	return true;
+}
+
 bool AGrabbable::GetGrabComponents_Implementation(TArray<UHeistGrabComponent*>& OutGrabComponents)
 {
 	if (GrabComponent && GrabComponent->IsGrabComponentReady())

@@ -6,15 +6,24 @@
 #include "Core/HeistGrabComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "PhysicsEngine/RadialForceComponent.h"
 
 
 AHeistDynamite::AHeistDynamite()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	// PrimaryActorTick.bCanEverTick = true;
+	RadialForceComponent = CreateDefaultSubobject<URadialForceComponent>(TEXT("RadialForceComp"));
+	RadialForceComponent->SetupAttachment(BaseMeshComponent);
+	RadialForceComponent->Radius = 100.f;
+	RadialForceComponent->bImpulseVelChange = true;
+	RadialForceComponent->ImpulseStrength = 5000.f;
+	RadialForceComponent->DestructibleDamage = 80.f;
+	RadialForceComponent->SetComponentTickEnabled(false);
+	RadialForceComponent->SetAutoActivate(false);
 	
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	
-	GrabComponent->GrabTypeBase = EGrabTypeBase::SNAP;
+	GrabComponent->GrabTypeBase = EGrabTypeBase::FREE;
 	
 	ExplosionTimerInSeconds = 0.5f;
 }
@@ -38,6 +47,9 @@ void AHeistDynamite::Exploded(AActor* DestroyedActor)
 
 void AHeistDynamite::Explode()
 {
+	RadialForceComponent->Activate();
+	RadialForceComponent->FireImpulse();
+	
 	Destroy();
 }
 
@@ -68,6 +80,11 @@ void AHeistDynamite::StartExplosion_Implementation()
 void AHeistDynamite::LockToPosition(FVector Position)
 {
 	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), LockPositionSound, GetActorLocation());
+}
+
+bool AHeistDynamite::IsRemoteGrabbable_Implementation() const
+{
+	return true;
 }
 
 void AHeistDynamite::Interact_Implementation()
