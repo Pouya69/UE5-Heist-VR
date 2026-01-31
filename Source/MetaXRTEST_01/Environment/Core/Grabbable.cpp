@@ -34,7 +34,7 @@ void AGrabbable::SetIsInFocus_Implementation(const bool bIsInFocus)
 
 bool AGrabbable::IsRemoteGrabbable_Implementation() const
 {
-	return !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
+	return !GrabComponent->IsBeingHeld() && !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
 }
 
 bool AGrabbable::RemoteGrab_Implementation()

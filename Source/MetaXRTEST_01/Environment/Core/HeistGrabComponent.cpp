@@ -1,6 +1,8 @@
 ﻿
 
 #include "HeistGrabComponent.h"
+
+#include "Core/HeistInteractionInterface.h"
 #include "Player/HeistMotionControllerComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/HeistPlayerInterface.h"
@@ -53,7 +55,8 @@ void UHeistGrabComponent::AttachHandToGrabComponent(bool bAttach,
 	{
 		// Attach Physics hand to this object.
 		// We snap to closest point
-		MotionControllerRef->PhysicsHandRef->AttachToComponent(PrimitiveComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		MotionControllerRef->PhysicsHandRef->AttachToComponent(PrimitiveComponent, 
+			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false), NAME_None);
 		
 		const FVector Start = MotionControllerRef->PhysicsHandRef->GetSocketLocation(GetHeldByHand(MotionControllerRef) == EControllerHand::Left ? "hand_l" : "hand_r");
 		FHitResult HitResult;
@@ -74,7 +77,8 @@ void UHeistGrabComponent::AttachHandToGrabComponent(bool bAttach,
 	
 	SetComponentTickEnabled(false);
 	// Detach from object and let it simulate.
-	MotionControllerRef->PhysicsHandRef->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	if (MotionControllerRef)
+		MotionControllerRef->PhysicsHandRef->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 }
 
 void UHeistGrabComponent::TraceFingersProcedural()
@@ -138,7 +142,7 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 	if (IsBeingHeld())
 	{
 		// Already being held.
-		TryRelease(nullptr, PlayerController);
+		// TryRelease(nullptr, PlayerController);
 	}
 	
 	switch (GrabTypeBase)
@@ -172,10 +176,10 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 				// Grabbed two-handed fully.
 				// We detach the hands and then attach the object to them.
 				
-				// AttachPrimitiveCompTo(AttachTo);
+				AttachPrimitiveCompTo(AttachTo);
 				
-				AttachHandToGrabComponent(false, MotionController);
-				OtherGrabComponent->AttachHandToGrabComponent(false, OtherGrabComponent->GetCurrentMotionControllerHoldingThis());
+				// AttachHandToGrabComponent(false, MotionController);
+				// OtherGrabComponent->AttachHandToGrabComponent(false, OtherGrabComponent->GetCurrentMotionControllerHoldingThis());
 				
 			}
 			else
@@ -193,6 +197,8 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 	}
 	
 	if (!bIsHeld) return false;
+	
+	IHeistInteractionInterface::Execute_SetIsInFocus(GetOwner(), false);
 	
 	CurrentMotionControllerHoldingThis = MotionController;
 	PlayerController->PlayHapticEffect(OnGrabHapticEffect, GetHeldByHand());
@@ -239,6 +245,7 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 		case EGrabTypeBase::TWO_HANDED:
 			bIsHeld = false;
 			AttachHandToGrabComponent(false, MotionController);
+			OtherGrabComponent->AttachHandToGrabComponent(false, OtherGrabComponent->GetCurrentMotionControllerHoldingThis());
 			break;
 		
 		default:
