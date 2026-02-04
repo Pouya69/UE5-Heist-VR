@@ -16,6 +16,12 @@ class METAXRTEST_01_API AGrabbable : public AActor, public IHeistInteractionInte
 	GENERATED_BODY()
 
 public:
+	virtual bool IsRemoteGrabbable_Implementation() const override;
+	
+	// Explicit control
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Remote Grab")
+		bool IsRemoteGrabbable;
+	
 	AGrabbable();
 
 protected:
@@ -26,8 +32,6 @@ protected:
 		TObjectPtr<UHeistGrabComponent> GrabComponent;
 	
 	virtual void SetIsInFocus_Implementation(const bool bIsInFocus) override;
-	
-	virtual bool IsRemoteGrabbable_Implementation() const override;
 	
 	virtual bool RemoteGrab_Implementation() override;
 	

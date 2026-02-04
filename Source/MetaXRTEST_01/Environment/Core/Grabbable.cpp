@@ -19,6 +19,8 @@ AGrabbable::AGrabbable()
 	GrabComponent->SetupAttachment(BaseMeshComponent);
 	GrabComponent->InitializeGrabComponent(BaseMeshComponent);
 	GrabComponent->GrabTypeBase = EGrabTypeBase::FREE;
+	
+	IsRemoteGrabbable = true;
 }
 
 void AGrabbable::SetIsInFocus_Implementation(const bool bIsInFocus)
@@ -34,7 +36,7 @@ void AGrabbable::SetIsInFocus_Implementation(const bool bIsInFocus)
 
 bool AGrabbable::IsRemoteGrabbable_Implementation() const
 {
-	return !GrabComponent->IsBeingHeld() && !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
+	return IsRemoteGrabbable && !GrabComponent->IsBeingHeld() && !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
 }
 
 bool AGrabbable::RemoteGrab_Implementation()

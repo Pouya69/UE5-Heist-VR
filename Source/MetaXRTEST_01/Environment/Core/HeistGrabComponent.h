@@ -6,6 +6,7 @@
 #include "Components/SceneComponent.h"
 #include "HeistGrabComponent.generated.h"
 
+class UPhysicsConstraintComponent;
 // For custom, we can define our own Enums to be used.
 UENUM(BlueprintType)
 enum class EGrabTypeBase : uint8
@@ -14,6 +15,7 @@ enum class EGrabTypeBase : uint8
 	FREE,
 	SNAP,
 	TWO_HANDED,
+	WEIGHTED_ONE_HANDED,
 	CUSTOM
 };
 
@@ -69,7 +71,9 @@ protected:
 		TObjectPtr<USoundBase> OnReleaseSound;
 	
 public:
-		
+	UPROPERTY(BlueprintReadWrite, Category="Grab Component")
+		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis;
+	
 	UPROPERTY(BlueprintReadWrite, Category="Grab Component | OtherComponents")
 		TObjectPtr<UHeistMotionControllerComponent> CurrentMotionControllerHoldingThis;
 	
@@ -98,7 +102,7 @@ public:
 		bool IsReadyToGrab() const;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController);
+		bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController);
@@ -132,4 +136,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		bool IsBeingHeld() const;
 
+	UFUNCTION(BlueprintCallable, Category="Grab Component")
+		bool DetachWhenTooFarFromGrabbable(const float DistanceThreshold = 50.0f);
 };
