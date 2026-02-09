@@ -25,7 +25,6 @@ class APlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrabbed, UHeistGrabComponent*, GrabComponent, UHeistMotionControllerComponent*, MotionControllerRef);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReleased, UHeistGrabComponent*, GrabComponent, UHeistMotionControllerComponent*, MotionControllerRef);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGrabbedTwoHanded, UHeistGrabComponent*, GrabComponentGrabbedLast, UHeistGrabComponent*, GrabComponentGrabbedFirst, UHeistMotionControllerComponent*, MotionControllerRef);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -54,9 +53,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Grab Component")
 		bool bIsHeld;
 	
-	// For Two-Handed ONLY
+	// For Two Handed Only
 	UPROPERTY(BlueprintReadOnly, Category="Grab Component | Two Handed")
-		TObjectPtr<UHeistGrabComponent> OtherGrabComponent;
+		bool bIsHeld_02;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
 		TObjectPtr<UHapticFeedbackEffect_Base> OnGrabHapticEffect;
@@ -74,8 +73,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="Grab Component")
 		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis;
 	
+	UPROPERTY(BlueprintReadWrite, Category="Grab Component | Two Handed")
+		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis_02;
+	
 	UPROPERTY(BlueprintReadWrite, Category="Grab Component | OtherComponents")
 		TObjectPtr<UHeistMotionControllerComponent> CurrentMotionControllerHoldingThis;
+	
+	// For Two Handed Only
+	UPROPERTY(BlueprintReadWrite, Category="Grab Component | OtherComponents | Two Handed")
+		TObjectPtr<UHeistMotionControllerComponent> CurrentMotionControllerHoldingThis_02;
 	
 	// No movement can be done. Only the hand gets stuck to the component.
 	UFUNCTION(BlueprintCallable, Category="Grab Component | Two Handed")
@@ -89,7 +95,7 @@ public:
 	
 	// Call this in PostInitializeComponents() of the actor
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		void InitializeGrabComponent(UPrimitiveComponent* InPrimitiveComp, const bool bWasInitializedFromActor = false, UHeistGrabComponent* OtherGrabComponentForTwoHanded = nullptr);
+		void InitializeGrabComponent(UPrimitiveComponent* InPrimitiveComp, const bool bWasInitializedFromActor = false);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		UHeistMotionControllerComponent* GetCurrentMotionControllerHoldingThis();
@@ -97,7 +103,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		bool IsGrabComponentReady() const;
 	
-	// Checks if the other grab component is being held so it knows it is ready to grab fully. ONLY FOR TWO HANDED.
+	// Checks if bIsBeingHeld is true.
 	UFUNCTION(BlueprintCallable, Category="Grab Component | Two Handed")
 		bool IsReadyToGrab() const;
 	
@@ -105,16 +111,13 @@ public:
 		bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController);
+		bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category="Grab Component")
 		FOnGrabbed OnGrabbed;
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category="Grab Component")
 		FOnReleased OnReleased;
-	
-	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category="Grab Component | Two Handed")
-		FOnGrabbedTwoHanded OnGrabbedTwoHanded;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		void SetSimulateOnDrop(const bool bSimulate);

@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "HeistFunctionLibrary.generated.h"
 
+enum class EHeistSize : uint8;
 class UHeistGrabComponent;
 /**
  * 
@@ -29,6 +30,12 @@ public:
 		static bool SetTimeDilationOfEveryone(FTimerHandle& GlobalTimeDilationTimerHandle, AActor* WorldReference, const float DilationAmount, const float AudioPitchDilation = 0.5f, const float Duration = -1.0f);
 		
 	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Time")
-		static bool RestoreTimeToNormal(AActor* WorldReference, UPARAM(ref) FTimerHandle& GlobalTimeDilationTimerHandle, const float AudioRestoreDuration = 1.f);
+		static bool SetTimeDilationOfObject(FTimerHandle& GlobalTimeDilationTimerHandle, AActor* ObjectToAffect, const float DilationAmount, const float Duration = -1.0f);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Time")
+		static bool RestoreTimeToNormal(AActor* WorldReference, UPARAM(ref) FTimerHandle& OutTimeDilationTimerHandle, const float AudioRestoreDuration = 1.f);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Time")
+		static bool RestoreTimeToNormalForObject(AActor* ObjectToAffect, UPARAM(ref) FTimerHandle& TimeDilationTimerHandle);
 		
 };

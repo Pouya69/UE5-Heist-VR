@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "HeistPlayerInterface.generated.h"
 
-enum class EHeistPlayerSize : uint8;
+enum class EHeistSize : uint8;
 
 UINTERFACE()
 class UHeistPlayerInterface : public UInterface
@@ -35,5 +35,5 @@ public:
 		void SetupBonePhysicsAndWeightRightHand_CPP(FName RootBoneName, bool bSimulate);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
-		void ChangeSize(EHeistPlayerSize PlayerSize);
+		bool ChangeSize(EHeistSize PlayerSize);
 };

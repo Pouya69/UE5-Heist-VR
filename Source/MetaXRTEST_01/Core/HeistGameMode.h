@@ -6,9 +6,9 @@
 #include "GameFramework/GameModeBase.h"
 #include "HeistGameMode.generated.h"
 
-enum class EHeistPlayerSize : uint8;
+enum class EHeistSize : uint8;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerChangeSize, EHeistPlayerSize, NewPlayerSize);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerChangeSize, EHeistSize, NewPlayerSize);
 
 UCLASS()
 class METAXRTEST_01_API AHeistGameMode : public AGameModeBase
@@ -17,8 +17,8 @@ class METAXRTEST_01_API AHeistGameMode : public AGameModeBase
 	
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Gameplay | Player Size")
-		void ChangePlayerSize(EHeistPlayerSize NewPlayerSize);
-	virtual void ChangePlayerSize_Implementation(EHeistPlayerSize NewPlayerSize);	
+		void ChangePlayerSize(EHeistSize NewPlayerSize);
+	virtual void ChangePlayerSize_Implementation(EHeistSize NewPlayerSize);	
 	
 	UPROPERTY(BlueprintAssignable, Category="Gameplay | Player Size")
 		FOnPlayerChangeSize OnPlayerChangeSize;
