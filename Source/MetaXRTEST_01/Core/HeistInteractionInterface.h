@@ -42,7 +42,11 @@ public:
 	
 	virtual bool IsRemoteGrabbable_Implementation() const;
 	
-	
+	// This functionality is for when the hand is supposed to be locked in place and/or moving in a specific direction.
+	// This will be called inside HeistPlayerMainComponent Tick() when something is grabbed.
+	// We pass the grabcomp for objects that have multiple CUSTOM types.
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void Custom_Tick(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent);
 	
 	// Used for when object is not actually placed and the green / red outline is being showed.
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")

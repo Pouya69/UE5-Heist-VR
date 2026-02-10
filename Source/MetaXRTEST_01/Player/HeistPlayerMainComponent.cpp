@@ -3,8 +3,11 @@
 
 #include "HeistPlayerMainComponent.h"
 
+#include "HeistMotionControllerComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Core/HeistInteractionInterface.h"
 #include "Core/HeistTypes.h"
+#include "Environment/Core/HeistGrabComponent.h"
 
 
 UHeistPlayerMainComponent::UHeistPlayerMainComponent()
@@ -15,6 +18,7 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 	RemoteGrabRange = 500.0f;
 	RemoteGrabRadiusCheck = 20.0f;
 	MinDotProductRemoteGrabThreshold = 0.2f;
+	MinDotProductCameraRemoteGrabThreshold = 0.7f;
 	MinForceThresholdVectorLength = 3.0f;
 	RemoteGrabForceAddition = FVector(0.0f, 0.0f, 300.0f);
 	
@@ -26,12 +30,18 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 
 void UHeistPlayerMainComponent::InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef,
 	USkeletalMeshComponent* InRightPhysicsHandRef, USkeletalMeshComponent* InLeftGhostHandRef,
-	USkeletalMeshComponent* InLeftPhysicsHandRef)
+	USkeletalMeshComponent* InLeftPhysicsHandRef,
+	UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
+	UCameraComponent* InCameraComponent)
 {
 	RightGhostHandRef = InRightGhostHandRef;
 	RightPhysicsHandRef = InRightPhysicsHandRef;
+	RightMotionControllerRef = InRightMotionControllerRef;
 	LeftGhostHandRef = InLeftGhostHandRef;
 	LeftPhysicsHandRef = InLeftPhysicsHandRef;
+	LeftMotionControllerRef = InLeftMotionControllerRef;
+	
+	CameraComponentRef = InCameraComponent;
 }
 
 void UHeistPlayerMainComponent::RemoteGrabRight()
@@ -58,10 +68,14 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 		
 		const FVector CurrentHandMovementDirectionWithLength = RightHandLocation - RightHandPreviousLocation;
 		
-		const float DotBetweenVelocityAndTrace = FVector::DotProduct((RightHandLocation - RightEndLocation).GetSafeNormal(), CurrentHandMovementDirectionWithLength.GetSafeNormal());
+		const FVector CastDirectionOpposite = (RightHandLocation - RightEndLocation).GetSafeNormal();
+		
+		const float DotBetweenVelocityAndTrace = FVector::DotProduct(CastDirectionOpposite, CurrentHandMovementDirectionWithLength.GetSafeNormal());
 		const float Length = CurrentHandMovementDirectionWithLength.Length();
 		
-		if (DotBetweenVelocityAndTrace >= MinDotProductRemoteGrabThreshold && Length >= MinForceThresholdVectorLength)
+		const float DotBetweenCameraForwardAndTrace = FVector::DotProduct(-CameraComponentRef->GetForwardVector(), CastDirectionOpposite);
+		
+		if (DotBetweenVelocityAndTrace >= MinDotProductRemoteGrabThreshold && Length >= MinForceThresholdVectorLength && DotBetweenCameraForwardAndTrace >= MinDotProductCameraRemoteGrabThreshold)
 		{
 			const FVector CompLoc = CurrentGrabInFocus_R->GetComponentLocation();
 			const float ForceRelativeToDistance = (FVector::Dist(RightHandLocation, CompLoc) - RemoteGrabDistanceRange.X) / (RemoteGrabForceRange.X - RemoteGrabDistanceRange.X) * (RemoteGrabForceRange.Y - RemoteGrabForceRange.X) + RemoteGrabDistanceRange.Y;
@@ -106,10 +120,14 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 		IHeistInteractionInterface::Execute_SetIsInFocus(LeftHitResult.GetActor(), true);
 		
 		const FVector CurrentHandMovementDirectionWithLength = LeftHandLocation - LeftHandPreviousLocation;
+		const FVector CastDirectionOpposite = (LeftHandLocation - LeftEndLocation).GetSafeNormal();
 		
-		const float DotBetweenVelocityAndTrace = FVector::DotProduct((LeftHandLocation - LeftEndLocation).GetSafeNormal(), CurrentHandMovementDirectionWithLength.GetSafeNormal());
+		const float DotBetweenVelocityAndTrace = FVector::DotProduct(CastDirectionOpposite, CurrentHandMovementDirectionWithLength.GetSafeNormal());
 		const float Length = CurrentHandMovementDirectionWithLength.Length();
-		if (DotBetweenVelocityAndTrace >= MinDotProductRemoteGrabThreshold && Length >= MinForceThresholdVectorLength)
+		
+		const float DotBetweenCameraForwardAndTrace = FVector::DotProduct(-CameraComponentRef->GetForwardVector(), CastDirectionOpposite);
+		
+		if (DotBetweenVelocityAndTrace >= MinDotProductRemoteGrabThreshold && Length >= MinForceThresholdVectorLength && DotBetweenCameraForwardAndTrace >= MinDotProductCameraRemoteGrabThreshold)
 		{
 			const FVector CompLoc = CurrentGrabInFocus_L->GetComponentLocation();
 			const float ForceRelativeToDistance = (FVector::Dist(LeftHandLocation, CompLoc) - RemoteGrabDistanceRange.X) / (RemoteGrabForceRange.X - RemoteGrabDistanceRange.X) * (RemoteGrabForceRange.Y - RemoteGrabForceRange.X) + RemoteGrabDistanceRange.Y;
@@ -129,4 +147,19 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 	}
 
 	LeftHandPreviousLocation = LeftHandLocation;
+}
+
+void UHeistPlayerMainComponent::CustomGrab_Tick(const float& DeltaTime)
+{
+	if (LeftMotionControllerRef->CurrentGrabbedComp && LeftMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM)
+	{
+		// Left grabbed custom Tick logic.
+		IHeistInteractionInterface::Execute_Custom_Tick(LeftMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, LeftMotionControllerRef->CurrentGrabbedComp);
+	}
+	
+	if (RightMotionControllerRef->CurrentGrabbedComp && RightMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM)
+	{
+		// Right grabbed custom Tick logic.
+		IHeistInteractionInterface::Execute_Custom_Tick(RightMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, RightMotionControllerRef->CurrentGrabbedComp);
+	}
 }

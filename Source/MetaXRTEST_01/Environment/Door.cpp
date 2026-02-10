@@ -106,45 +106,17 @@ void ADoor::OnDoorHandleReleased(UHeistGrabComponent* GrabbedComponent,
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
 }
 
-bool ADoor::IsDoorOpen() const
+void ADoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
-	return bIsDoorOpen;
-}
-
-void ADoor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	
-	// UE_LOG(LogTemp, Warning, TEXT("Door Tick"));
-	
-	if (!bIsHandOnHandle)
-	{
-		// HandleAnchorComponent->SetRelativeRotation(FMath::RInterpConstantTo(HandleAnchorComponent->GetRelativeTransform().GetRotation().Rotator(), FRotator::ZeroRotator, DeltaTime, 20.f));
-		return;
-	}
-	
-	/*
-	if (!CVarDoorOpen.GetValueOnGameThread() && !CanDoorTick())
-	{
-		// Door should be closed. (When debugging the door, we disable this functionality at least)
-		
-		UE_LOG(LogTemp, Warning, TEXT("Door closing automatically."));
-		OpenCloseDoor(false);
-		return;
-	}
-	*/
-	
-	
-	
-	
 	UHeistMotionControllerComponent* MotionControllerHoldingHandle = GrabComponent->GetCurrentMotionControllerHoldingThis();
+	/*
 	if (!MotionControllerHoldingHandle)
 	{
 		// Door handle is not grabbed.
 		
 		return;
 	}
-	
+	*/
 	
 	FTransform HandleAnchorTransform = HandleAnchorComponent->GetComponentTransform();
 	
@@ -191,6 +163,30 @@ void ADoor::Tick(float DeltaTime)
 	}
 	
 	MotionControllerHoldingHandle->PhysicsHandRef->SetWorldLocationAndRotation(HandPosition, HandRotation, true, nullptr, ETeleportType::ResetPhysics);
+}
+
+bool ADoor::IsDoorOpen() const
+{
+	return bIsDoorOpen;
+}
+
+void ADoor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	// UE_LOG(LogTemp, Warning, TEXT("Door Tick"));
+	
+	if (!bIsHandOnHandle && !CVarDoorOpen.GetValueOnGameThread() && !CanDoorTick())
+	{
+		// HandleAnchorComponent->SetRelativeRotation(FMath::RInterpConstantTo(HandleAnchorComponent->GetRelativeTransform().GetRotation().Rotator(), FRotator::ZeroRotator, DeltaTime, 20.f));
+		// Door should be closed. (When debugging the door, we disable this functionality at least)
+		
+		UE_LOG(LogTemp, Warning, TEXT("Door closing automatically."));
+		OpenCloseDoor(false);
+		return;
+	}
+	
+	
 	
 	
 	

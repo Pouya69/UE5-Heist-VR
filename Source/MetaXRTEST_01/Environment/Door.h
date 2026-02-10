@@ -75,6 +75,8 @@ protected:
 		void OnDoorHandleReleased(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);
 	
 	bool bIsDoorOpen = false;
+	
+	virtual void Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent) override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category="Door")

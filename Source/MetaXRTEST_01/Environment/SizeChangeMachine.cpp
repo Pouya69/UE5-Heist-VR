@@ -120,10 +120,8 @@ void ASizeChangeMachine::OnHandleReleased(UHeistGrabComponent* ReleasedComponent
 	}
 }
 
-void ASizeChangeMachine::Tick(float DeltaTime)
+void ASizeChangeMachine::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
-	Super::Tick(DeltaTime);
-	
 	if (GrabComponent->IsBeingHeld())
 	{
 		UHeistMotionControllerComponent* ControllerRef = GrabComponent->GetCurrentMotionControllerHoldingThis();
@@ -147,4 +145,11 @@ void ASizeChangeMachine::Tick(float DeltaTime)
 		
 		ControllerRef->PhysicsHandRef->SetWorldTransform(ControllerTransformRelativeToGrabComp);
 	}
+}
+
+void ASizeChangeMachine::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	
 }

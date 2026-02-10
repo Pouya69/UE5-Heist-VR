@@ -145,27 +145,9 @@ void AHeistRemoteDetonator::Detonate()
 		DynamiteLinked->StartExplosion();
 }
 
-void AHeistRemoteDetonator::Tick(float DeltaTime)
+void AHeistRemoteDetonator::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
-	Super::Tick(DeltaTime);
-	
 	UHeistMotionControllerComponent* MotionControllerHoldingHandle = HandleGrabComponent->GetCurrentMotionControllerHoldingThis();
-	if (!MotionControllerHoldingHandle)
-	{
-		// Handle is not grabbed or the base is not grabbed.
-		FVector HandleLocation = HandleMeshComponent->GetRelativeLocation();
-		HandleLocation.Z = FMath::FInterpConstantTo(HandleLocation.Z, HandleIdleHeight, DeltaTime, HandleIdleHeightTransitionSpeed);
-		HandleMeshComponent->SetRelativeLocation(HandleLocation, true, nullptr, ETeleportType::ResetPhysics);
-		
-		if (FMath::IsNearlyEqual(HandleLocation.Z, HandleIdleHeight, 0.01f))
-		{
-			// Reached the idle height.
-			SetActorTickEnabled(false);
-		}
-		
-		return;
-	}
-	
 	
 	
 	if (!GrabComponent->IsBeingHeld())
@@ -264,5 +246,24 @@ void AHeistRemoteDetonator::Tick(float DeltaTime)
 	{
 		// Handle is at the top. We recharge so we can interact now.
 		Execute_SetIsInteractable(this, true);
+	}
+}
+
+void AHeistRemoteDetonator::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	if (!HandleGrabComponent->GetCurrentMotionControllerHoldingThis())
+	{
+		// Handle is not grabbed or the base is not grabbed.
+		FVector HandleLocation = HandleMeshComponent->GetRelativeLocation();
+		HandleLocation.Z = FMath::FInterpConstantTo(HandleLocation.Z, HandleIdleHeight, DeltaTime, HandleIdleHeightTransitionSpeed);
+		HandleMeshComponent->SetRelativeLocation(HandleLocation, true, nullptr, ETeleportType::ResetPhysics);
+		
+		if (FMath::IsNearlyEqual(HandleLocation.Z, HandleIdleHeight, 0.01f))
+		{
+			// Reached the idle height.
+			SetActorTickEnabled(false);
+		}
 	}
 }

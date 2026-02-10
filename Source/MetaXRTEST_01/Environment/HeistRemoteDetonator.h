@@ -92,6 +92,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="VR Hands")
 		float MaxDistanceBetweenControllerAndPhysicsHand;
 	
+	virtual void Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent) override;
+	
 public:
 	virtual void Tick(float DeltaTime) override;
 	

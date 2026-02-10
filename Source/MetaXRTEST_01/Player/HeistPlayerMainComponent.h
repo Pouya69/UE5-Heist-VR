@@ -7,6 +7,9 @@
 #include "HeistPlayerMainComponent.generated.h"
 
 
+class UCameraComponent;
+class UHeistMotionControllerComponent;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class METAXRTEST_01_API UHeistPlayerMainComponent : public UActorComponent
 {
@@ -34,9 +37,21 @@ protected:
 	UPROPERTY()
 		TObjectPtr<USkeletalMeshComponent> LeftPhysicsHandRef;
 	
+	UPROPERTY()
+		TObjectPtr<UHeistMotionControllerComponent> RightMotionControllerRef;
+	UPROPERTY()
+		TObjectPtr<UHeistMotionControllerComponent> LeftMotionControllerRef;
+	
+	UPROPERTY()
+		TObjectPtr<UCameraComponent> CameraComponentRef;
+	
 	// Between the hand velocity (now - previous) AND normal of surface.
 	UPROPERTY(EditAnywhere, Category = "Remote Grab")
 		float MinDotProductRemoteGrabThreshold;
+	
+	// Between the hand velocity (now - previous) AND the camera looking direction.
+	UPROPERTY(EditAnywhere, Category = "Remote Grab")
+		float MinDotProductCameraRemoteGrabThreshold;
 	
 	// The Vector Length of hand movement direction has to be >= this for it to be gravitated.
 	// E.g. 3.0
@@ -58,7 +73,9 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef, USkeletalMeshComponent* InRightPhysicsHandRef,
-		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef);
+		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef,
+		UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
+		UCameraComponent* InCameraComponent);
 	
 	UFUNCTION(BlueprintCallable, Category="Remote Grab")
 		void RemoteGrabRight();
@@ -77,5 +94,8 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Hands")
 		FVector LeftHandPreviousLocation;
+	
+	UFUNCTION(BlueprintCallable, Category="Hands")
+		void CustomGrab_Tick(const float& DeltaTime);
 };
 

@@ -61,6 +61,8 @@ protected:
 	
 	UFUNCTION()
 		void OnHandleReleased(UHeistGrabComponent* ReleasedComponent, UHeistMotionControllerComponent* MotionControllerRef);
+	
+	virtual void Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent) override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
