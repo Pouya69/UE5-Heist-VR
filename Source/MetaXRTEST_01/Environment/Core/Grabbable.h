@@ -8,6 +8,7 @@
 #include "Grabbable.generated.h"
 
 
+class UHeistMotionControllerComponent;
 class UHeistGrabComponent;
 
 UCLASS()
@@ -23,6 +24,8 @@ public:
 		bool IsRemoteGrabbable;
 	
 	AGrabbable();
+	
+	FTimerHandle RemoteGrabTimerHandle;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -35,10 +38,17 @@ protected:
 	
 	virtual bool RemoteGrab_Implementation() override;
 	
-	FTimerHandle RemoteGrabTimerHandle;
+	virtual bool IsGrabbable_Implementation(const FName BoneHit) const override;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Materials")
 		TObjectPtr<UMaterialInterface> InFocusMaterial;
 	
 	virtual bool GetGrabComponents_Implementation(TArray<UHeistGrabComponent*>& OutGrabComponents) override;
+	
+	virtual EHeistGrabHandState GetHandAnimationType_Implementation() const override;
+	
+	UFUNCTION()
+		void OnReleased_Default(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);
+	
+	virtual void PostInitializeComponents() override;
 };

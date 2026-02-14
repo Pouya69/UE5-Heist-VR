@@ -14,9 +14,12 @@
 UHeistGrabComponent::UHeistGrabComponent()
 {
 	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bCanEverTick = true;
 	
 	GrabTypeBase = EGrabTypeBase::FREE;
 	bSimulateOnDrop = true;
+	
+	HandDetachmentDistanceThreshold = 50.0f;
 }
 
 void UHeistGrabComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
@@ -44,6 +47,7 @@ void UHeistGrabComponent::InitializeGrabComponent(UPrimitiveComponent* InPrimiti
 	
 	if (bWasInitializedFromActor) return;
 	
+	PrimitiveComponent->SetCanEverAffectNavigation(false);
 	PrimitiveComponent->SetSimulatePhysics(true);
 	SetSimulateOnDrop(true);
 	PrimitiveComponent->SetCollisionProfileName("VR_Grabbable");
@@ -168,20 +172,43 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 			break;
 		
 		case EGrabTypeBase::CUSTOM:
+			if (bIsHeld)
+			{
+				// Already grabbed.
+				if (GetHeldByHand() == EControllerHand::Left)
+					IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionController->GetOwner(), "hand_l", true);
+				else
+					IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionController->GetOwner(), "hand_r", true);
+			}
+			SetComponentTickEnabled(true);
 			bIsHeld = true;
 			break;
 		
 		case EGrabTypeBase::WEIGHTED_ONE_HANDED:
+			// AttachPrimitiveCompTo(AttachTo);
+			bIsHeld = true;
+			SetComponentTickEnabled(true);
 			if (PhysicsConstraintGrabbingThis && PhysicsConstraintGrabbingThis != HandPhysicsConstraint)
 			{
 				PhysicsConstraintGrabbingThis->BreakConstraint();
+				PhysicsConstraintGrabbingThis = nullptr;
+				FTimerDelegate TimerDelegate;
+				
+				
+				TimerDelegate.BindLambda([&, HandPhysicsConstraint, AttachTo, MotionController]()
+				{
+					PhysicsConstraintGrabbingThis = HandPhysicsConstraint;
+					PhysicsConstraintGrabbingThis->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
+				});
+				GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
 			}
-			PhysicsConstraintGrabbingThis = HandPhysicsConstraint;
-			PhysicsConstraintGrabbingThis->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
+			else
+			{
+				PhysicsConstraintGrabbingThis = HandPhysicsConstraint;
+				PhysicsConstraintGrabbingThis->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
+			}
+			
 			// SetPrimitiveComponentPhysicsEnabled(false);
-			// AttachPrimitiveCompTo(AttachTo);
-			SetComponentTickEnabled(true);
-			bIsHeld = true;
 			break;
 		
 		case EGrabTypeBase::TWO_HANDED:
@@ -190,6 +217,7 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 				// One hand is already grabbing this. We grab it with the second hand.
 				PhysicsConstraintGrabbingThis_02 = HandPhysicsConstraint;
 				PhysicsConstraintGrabbingThis_02->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
+				PhysicsConstraintGrabbingThis_02->UpdateConstraintFrames();
 				bIsHeld_02 = true;
 			}
 			else
@@ -212,6 +240,7 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 	IHeistInteractionInterface::Execute_SetIsInFocus(GetOwner(), false);
 	
 	CurrentMotionControllerHoldingThis = MotionController;
+	MotionController->CurrentGrabbedComp = this;
 	PlayerController->PlayHapticEffect(OnGrabHapticEffect, GetHeldByHand());
 	
 	UGameplayStatics::PlaySoundAtLocation(this, OnGrabSound, GetComponentLocation());
@@ -264,6 +293,7 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 		
 		case EGrabTypeBase::CUSTOM:
 			bIsHeld = false;
+			SetComponentTickEnabled(false);
 			break;
 		
 		case EGrabTypeBase::TWO_HANDED:
@@ -297,8 +327,12 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 				{
 					// There was one hand only grabbing it. We just release it.
 					bIsHeld = false;
-					PhysicsConstraintGrabbingThis->BreakConstraint();
-					PhysicsConstraintGrabbingThis = nullptr;
+					if (PhysicsConstraintGrabbingThis)
+					{
+						PhysicsConstraintGrabbingThis->BreakConstraint();
+						PhysicsConstraintGrabbingThis = nullptr;
+					}
+					
 					SetPrimitiveComponentPhysicsEnabled(true);
 					SetComponentTickEnabled(false);
 				}
@@ -316,7 +350,10 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 	}
 	
 	if (CurrentMotionControllerHoldingThis)
+	{
+		CurrentMotionControllerHoldingThis->CurrentGrabbedComp = nullptr;
 		PlayerController->PlayHapticEffect(OnReleaseHapticEffect, GetHeldByHand(CurrentMotionControllerHoldingThis));
+	}
 	CurrentMotionControllerHoldingThis = nullptr;
 	
 	UGameplayStatics::PlaySoundAtLocation(this, OnReleaseSound, GetComponentLocation());
@@ -371,10 +408,10 @@ bool UHeistGrabComponent::IsBeingHeld() const
 	return GrabTypeBase == EGrabTypeBase::TWO_HANDED ? bIsHeld && bIsHeld_02 : bIsHeld;
 }
 
-bool UHeistGrabComponent::DetachWhenTooFarFromGrabbable(const float DistanceThreshold)
+bool UHeistGrabComponent::DetachWhenTooFarFromGrabbable()
 {
 	if (CurrentMotionControllerHoldingThis == nullptr || 
-		FVector::Dist(CurrentMotionControllerHoldingThis->GhostHandRef->GetComponentLocation(), PrimitiveComponent->GetComponentLocation()) <= DistanceThreshold) return false;
+		FVector::Dist(CurrentMotionControllerHoldingThis->GetComponentLocation(), CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation()) <= HandDetachmentDistanceThreshold) return false;
 	
 	TryRelease(CurrentMotionControllerHoldingThis, UGameplayStatics::GetPlayerController(GetWorld(), 0), PhysicsConstraintGrabbingThis);
 	return true;

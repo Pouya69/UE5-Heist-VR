@@ -7,6 +7,7 @@
 #include "HeistPlayerMainComponent.generated.h"
 
 
+class AHeistPistol;
 class UCameraComponent;
 class UHeistMotionControllerComponent;
 
@@ -69,13 +70,16 @@ protected:
 	// For mapping distance to force.
 	UPROPERTY(EditAnywhere, Category = "Remote Grab")
 		FVector2D RemoteGrabForceRange;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Hand Equipments")
+		TObjectPtr<AHeistPistol> PistolAttachedToHand;
 
 public:
 	UFUNCTION(BlueprintCallable)
 	void InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef, USkeletalMeshComponent* InRightPhysicsHandRef,
 		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef,
 		UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
-		UCameraComponent* InCameraComponent);
+		UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol);
 	
 	UFUNCTION(BlueprintCallable, Category="Remote Grab")
 		void RemoteGrabRight();
@@ -97,5 +101,15 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Hands")
 		void CustomGrab_Tick(const float& DeltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category="Hands | Pistol")
+		void Custom_PistolTick(const float& Alpha);
+	
+	UFUNCTION(BlueprintCallable, Category="Hands | Pistol")
+		void TogglePistolEnabled(const bool bEnabled);
+	
+	// One-time used only
+	UFUNCTION(BlueprintCallable, Category="Hands | Pistol")
+		void PickedUpPistol();
 };
 

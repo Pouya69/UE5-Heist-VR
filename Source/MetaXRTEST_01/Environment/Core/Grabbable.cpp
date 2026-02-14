@@ -3,6 +3,7 @@
 
 #include "Grabbable.h"
 
+#include "Core/HeistTypes.h"
 #include "Environment/Core/HeistGrabComponent.h"
 
 
@@ -42,8 +43,14 @@ bool AGrabbable::IsRemoteGrabbable_Implementation() const
 bool AGrabbable::RemoteGrab_Implementation()
 {
 	Execute_SetIsInFocus(this, false);
+	GetWorldTimerManager().ClearTimer(RemoteGrabTimerHandle);
 	GetWorldTimerManager().SetTimer(RemoteGrabTimerHandle, 1.8f, false);
 	
+	return true;
+}
+
+bool AGrabbable::IsGrabbable_Implementation(const FName BoneHit) const
+{
 	return true;
 }
 
@@ -55,4 +62,25 @@ bool AGrabbable::GetGrabComponents_Implementation(TArray<UHeistGrabComponent*>& 
 		return true;
 	}
 	return false;
+}
+
+EHeistGrabHandState AGrabbable::GetHandAnimationType_Implementation() const
+{
+	return EHeistGrabHandState::DEFAULT;
+}
+
+void AGrabbable::OnReleased_Default(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef)
+{
+	GetWorldTimerManager().ClearTimer(RemoteGrabTimerHandle);
+	GetWorldTimerManager().SetTimer(RemoteGrabTimerHandle, 1.8f, false);
+}
+
+void AGrabbable::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	
+	if (GetWorld() && GetWorld()->IsGameWorld())
+	{
+		GrabComponent->OnReleased.AddDynamic(this, &AGrabbable::OnReleased_Default);
+	}
 }

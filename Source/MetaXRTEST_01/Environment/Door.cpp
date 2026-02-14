@@ -65,6 +65,8 @@ ADoor::ADoor()
 	DoorOpenTriggerHandleThresholdPitch = -45.0f;
 	
 	MaxDistanceBetweenPhysicsHandAndMotionController = 30.f;
+	
+	IsRemoteGrabbable = false;
 }
 
 void ADoor::PostInitializeComponents()

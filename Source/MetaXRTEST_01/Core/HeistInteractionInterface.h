@@ -5,6 +5,7 @@
 #include "HeistInteractionInterface.generated.h"
 
 
+enum class EHeistGrabHandState : uint8;
 class UHeistGrabComponent;
 
 UINTERFACE(MinimalAPI)
@@ -38,6 +39,14 @@ public:
 		bool IsRemoteGrabbable() const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		bool IsGrabbable(const FName BoneHit) const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		EHeistGrabHandState GetHandAnimationType() const;
+	
+	virtual bool IsGrabbable_Implementation(const FName BoneHit) const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		bool RemoteGrab();
 	
 	virtual bool IsRemoteGrabbable_Implementation() const;
@@ -60,4 +69,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void ReleasedOnObjective(AActor* ObjectiveActor);
+	
+	// Useful for things that are derrived from wheels etc.
+	// Amount is Normalize (0 <-> 1)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void SetAmount(const float NewAmount);
 };

@@ -4,10 +4,13 @@
 #include "HeistPlayerMainComponent.h"
 
 #include "HeistMotionControllerComponent.h"
+#include "HeistPlayerState.h"
 #include "Camera/CameraComponent.h"
 #include "Core/HeistInteractionInterface.h"
 #include "Core/HeistTypes.h"
 #include "Environment/Core/HeistGrabComponent.h"
+#include "Inventory_Objects/HeistPistol.h"
+#include "Kismet/GameplayStatics.h"
 
 
 UHeistPlayerMainComponent::UHeistPlayerMainComponent()
@@ -32,16 +35,26 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(USkeletalMeshComponent
 	USkeletalMeshComponent* InRightPhysicsHandRef, USkeletalMeshComponent* InLeftGhostHandRef,
 	USkeletalMeshComponent* InLeftPhysicsHandRef,
 	UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
-	UCameraComponent* InCameraComponent)
+	UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol)
 {
 	RightGhostHandRef = InRightGhostHandRef;
 	RightPhysicsHandRef = InRightPhysicsHandRef;
+	
+	PistolAttachedToHand = InHeistPistol;
+	RightPhysicsHandRef->IgnoreActorWhenMoving(PistolAttachedToHand, true);
+	PistolAttachedToHand->
+	PistolAttachedToHand->InitializeBulletPools();
+	TogglePistolEnabled(false);
+	
 	RightMotionControllerRef = InRightMotionControllerRef;
 	LeftGhostHandRef = InLeftGhostHandRef;
 	LeftPhysicsHandRef = InLeftPhysicsHandRef;
 	LeftMotionControllerRef = InLeftMotionControllerRef;
 	
 	CameraComponentRef = InCameraComponent;
+	
+	AHeistPlayerState* PlayerStateRef = Cast<AHeistPlayerState>(UGameplayStatics::GetPlayerState(GetWorld(), 0));
+	PlayerStateRef->HeistPlayerMainComponentRef = this;
 }
 
 void UHeistPlayerMainComponent::RemoteGrabRight()
@@ -78,7 +91,7 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 		if (DotBetweenVelocityAndTrace >= MinDotProductRemoteGrabThreshold && Length >= MinForceThresholdVectorLength && DotBetweenCameraForwardAndTrace >= MinDotProductCameraRemoteGrabThreshold)
 		{
 			const FVector CompLoc = CurrentGrabInFocus_R->GetComponentLocation();
-			const float ForceRelativeToDistance = (FVector::Dist(RightHandLocation, CompLoc) - RemoteGrabDistanceRange.X) / (RemoteGrabForceRange.X - RemoteGrabDistanceRange.X) * (RemoteGrabForceRange.Y - RemoteGrabForceRange.X) + RemoteGrabDistanceRange.Y;
+			const float ForceRelativeToDistance = RemoteGrabForceRange.X + ((RemoteGrabForceRange.Y - RemoteGrabForceRange.X) / (RemoteGrabDistanceRange.Y - RemoteGrabDistanceRange.X)) * (FVector::Dist(RightHandLocation, CompLoc) - RemoteGrabDistanceRange.X);
 			
 			const FVector FinalImpulseDirection = (RightHandLocation - CompLoc).GetSafeNormal() * ForceRelativeToDistance + RemoteGrabForceAddition;
 			CurrentGrabInFocus_R->AddImpulse(FinalImpulseDirection, NAME_None, true);
@@ -130,7 +143,7 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 		if (DotBetweenVelocityAndTrace >= MinDotProductRemoteGrabThreshold && Length >= MinForceThresholdVectorLength && DotBetweenCameraForwardAndTrace >= MinDotProductCameraRemoteGrabThreshold)
 		{
 			const FVector CompLoc = CurrentGrabInFocus_L->GetComponentLocation();
-			const float ForceRelativeToDistance = (FVector::Dist(LeftHandLocation, CompLoc) - RemoteGrabDistanceRange.X) / (RemoteGrabForceRange.X - RemoteGrabDistanceRange.X) * (RemoteGrabForceRange.Y - RemoteGrabForceRange.X) + RemoteGrabDistanceRange.Y;
+			const float ForceRelativeToDistance = RemoteGrabForceRange.X + ((RemoteGrabForceRange.Y - RemoteGrabForceRange.X) / (RemoteGrabDistanceRange.Y - RemoteGrabDistanceRange.X)) * (FVector::Dist(LeftHandLocation, CompLoc) - RemoteGrabDistanceRange.X);
 			
 			const FVector FinalImpulseDirection = (LeftHandLocation - CompLoc).GetSafeNormal() * ForceRelativeToDistance + RemoteGrabForceAddition;
 			CurrentGrabInFocus_L->AddImpulse(FinalImpulseDirection, NAME_None, true);
@@ -151,6 +164,7 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 
 void UHeistPlayerMainComponent::CustomGrab_Tick(const float& DeltaTime)
 {
+	
 	if (LeftMotionControllerRef->CurrentGrabbedComp && LeftMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM)
 	{
 		// Left grabbed custom Tick logic.
@@ -162,4 +176,30 @@ void UHeistPlayerMainComponent::CustomGrab_Tick(const float& DeltaTime)
 		// Right grabbed custom Tick logic.
 		IHeistInteractionInterface::Execute_Custom_Tick(RightMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, RightMotionControllerRef->CurrentGrabbedComp);
 	}
+}
+
+void UHeistPlayerMainComponent::Custom_PistolTick(const float& Alpha)
+{
+	if (!PistolAttachedToHand || PistolAttachedToHand->bIsPistolEnabled)
+		return;
+	PistolAttachedToHand->CustomPistolTick(Alpha);
+}
+
+void UHeistPlayerMainComponent::TogglePistolEnabled(const bool bEnabled)
+{
+	if (bEnabled)
+	{
+		PistolAttachedToHand->AttachToComponent(RightPhysicsHandRef, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true));
+	}
+	else
+	{
+		PistolAttachedToHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	}
+	
+	PistolAttachedToHand->TogglePistolEnabled(bEnabled);
+}
+
+void UHeistPlayerMainComponent::PickedUpPistol()
+{
+	TogglePistolEnabled(true);
 }

@@ -23,8 +23,8 @@ enum class EGrabTypeBase : uint8
 class UHeistMotionControllerComponent;
 class APlayerController;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrabbed, UHeistGrabComponent*, GrabComponent, UHeistMotionControllerComponent*, MotionControllerRef);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReleased, UHeistGrabComponent*, GrabComponent, UHeistMotionControllerComponent*, MotionControllerRef);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrabbed, UHeistGrabComponent*, GrabbedComponent, UHeistMotionControllerComponent*, MotionControllerRef);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReleased, UHeistGrabComponent*, GrabbbedComponent, UHeistMotionControllerComponent*, MotionControllerRef);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -108,10 +108,10 @@ public:
 		bool IsReadyToGrab() const;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
+		virtual bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
+		virtual bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category="Grab Component")
 		FOnGrabbed OnGrabbed;
@@ -139,6 +139,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		bool IsBeingHeld() const;
 
+	// If Component Tick is enabled, when controller distance is too far from this, we detach it.
+	UPROPERTY(EditAnywhere, Category="Grab Component")
+		float HandDetachmentDistanceThreshold;
+	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool DetachWhenTooFarFromGrabbable(const float DistanceThreshold = 50.0f);
+		bool DetachWhenTooFarFromGrabbable();
 };
