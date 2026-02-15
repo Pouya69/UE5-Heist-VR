@@ -99,13 +99,13 @@ void AHeistWheel::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 	
 	if (!FMath::IsNearlyZero(SignedAngleRad, HandRotationThresholdToMove))
 	{
-		CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, CurrentRotationRoll + (UKismetMathLibrary::NormalizeAxis(SignedAngleDeg)), DeltaTime, InterpToPlayerHandSpeed);
 		// const float RotationValueBeforeClamp = (-ControllerTransformRelativeToLeverBase.GetTranslation()).ToOrientationQuat().Rotator().Pitch;
 		// CurrentRotationRoll = FMath::Clamp(RotationValueBeforeClamp, InitialOffRotationRoll, TargetFullRotationRoll);
 	
 		// CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, CurrentRotationRoll + DeltaRotation, DeltaTime, 70.0f);
 	
-		CurrentRotationRoll = FMath::Clamp(CurrentRotationRoll, InitialOffRotationRoll, TargetFullRotationRoll);
+		CurrentRotationRoll = FMath::Clamp(FMath::FInterpConstantTo(CurrentRotationRoll, CurrentRotationRoll + (UKismetMathLibrary::NormalizeAxis(SignedAngleDeg)), DeltaTime, InterpToPlayerHandSpeed)
+			, InitialOffRotationRoll, TargetFullRotationRoll);
 		// UE_LOG(LogTemp, Log, TEXT("%f"),  CurrentRotationRoll);
 		const FRotator FinalRotation = FRotator(0.0f, 0, CurrentRotationRoll);
 	
