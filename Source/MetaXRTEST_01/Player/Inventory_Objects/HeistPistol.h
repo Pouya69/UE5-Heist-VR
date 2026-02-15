@@ -38,6 +38,7 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Pistol | Animation")
 		float PistolTriggerAlpha;
 	
+	USkeletalMeshComponent* GetPistolSkeletalMeshComponent();
 protected:
 	virtual void BeginPlay() override;
 	

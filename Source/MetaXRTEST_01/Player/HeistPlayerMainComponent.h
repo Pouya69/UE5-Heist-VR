@@ -75,6 +75,7 @@ protected:
 		TObjectPtr<AHeistPistol> PistolAttachedToHand;
 
 public:
+	
 	UFUNCTION(BlueprintCallable)
 	void InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef, USkeletalMeshComponent* InRightPhysicsHandRef,
 		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef,

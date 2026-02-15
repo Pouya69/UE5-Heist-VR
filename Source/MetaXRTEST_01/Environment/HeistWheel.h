@@ -59,19 +59,51 @@ public:
 		float ProgressResetSpeed;
 
 protected:
+	// Will trigger a timer based on this time. For stopping ticking.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress | Tick")
+		float CheckForPlayerEverySecondsForStopTick;
+	
+	UPROPERTY(EditAnywhere, Category="Hand Config")
+		float InterpToPlayerHandSpeed;
+	
+	UPROPERTY(EditAnywhere, Category="Hand Config")
+		float HandRotationThresholdToMove;
+	
+	FTimerHandle CheckForPlayerStopTickTimerHandle;
+	
+	FQuat InitialQuat;
+	FQuat LastQuat;
+	
+	UFUNCTION()
+		void CheckForPlayerStopTick();
+	
+	UFUNCTION()
+		void OnWheelTouchedOrHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+		TObjectPtr<UStaticMeshComponent> WheelMeshComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+		TObjectPtr<UStaticMeshComponent> HandleMeshComponent;
+	
 	UPROPERTY(EditAnywhere, Category="Hand Config")
 		FVector HandLocationOffset;
 	
 	UPROPERTY(EditAnywhere, Category="Hand Config")
 		FRotator HandRotationOffset;
-public:
-	virtual void Tick(float DeltaTime) override;
 	
 	UFUNCTION()
 		void OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);
 	
 	UFUNCTION()
 		void OnWheelReleased(UHeistGrabComponent* ReleasedComponent, UHeistMotionControllerComponent* MotionControllerRef);
+	
+	virtual bool IsGrabbable_Implementation(const FName BoneHit) const override;
+	
+	virtual void PostInitializeComponents() override;
+	
+public:
+	virtual void Tick(float DeltaTime) override;
 	
 	
 };

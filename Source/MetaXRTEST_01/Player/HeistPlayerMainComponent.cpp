@@ -30,19 +30,18 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 	
 }
 
-
 void UHeistPlayerMainComponent::InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef,
-	USkeletalMeshComponent* InRightPhysicsHandRef, USkeletalMeshComponent* InLeftGhostHandRef,
-	USkeletalMeshComponent* InLeftPhysicsHandRef,
-	UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
-	UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol)
+                                                          USkeletalMeshComponent* InRightPhysicsHandRef, USkeletalMeshComponent* InLeftGhostHandRef,
+                                                          USkeletalMeshComponent* InLeftPhysicsHandRef,
+                                                          UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
+                                                          UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol)
 {
 	RightGhostHandRef = InRightGhostHandRef;
 	RightPhysicsHandRef = InRightPhysicsHandRef;
 	
 	PistolAttachedToHand = InHeistPistol;
 	RightPhysicsHandRef->IgnoreActorWhenMoving(PistolAttachedToHand, true);
-	PistolAttachedToHand->
+	PistolAttachedToHand->GetPistolSkeletalMeshComponent()->IgnoreActorWhenMoving(GetOwner(), true);
 	PistolAttachedToHand->InitializeBulletPools();
 	TogglePistolEnabled(false);
 	

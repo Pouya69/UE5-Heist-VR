@@ -78,8 +78,6 @@ void AHeistPistol::InitializeBulletPools()
 	SpawnParams.Instigator = GetInstigator();
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	
-	PistolMeshComponent->IgnoreActorWhenMoving(GetInstigator(), true);
-	
 	for (int i = 0; i < StartingAmountOfBulletsInPool; ++i)
 	{
 		AHeistBullet* BulletSpawned = GetWorld()->SpawnActor<AHeistBullet>(BulletClass, FTransform::Identity, SpawnParams);
@@ -90,6 +88,11 @@ void AHeistPistol::InitializeBulletPools()
 void AHeistPistol::ResetBulletAndAddBackToPool(AHeistBullet* Bullet)
 {
 	NotActivePool.Enqueue(Bullet);
+}
+
+USkeletalMeshComponent* AHeistPistol::GetPistolSkeletalMeshComponent()
+{
+	return PistolMeshComponent;
 }
 
 void AHeistPistol::BeginPlay()

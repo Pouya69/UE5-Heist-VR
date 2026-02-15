@@ -5,6 +5,7 @@
 
 #include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Player/HeistMotionControllerComponent.h"
 #include "Player/HeistPlayerInterface.h"
 
@@ -22,61 +23,108 @@ AHeistWheel::AHeistWheel()
 	TargetFullRotationRoll = 500.0f;
 	InitialOffRotationRoll = 0.0f;
 	
+	BaseMeshComponent->SetCollisionProfileName("WorldDynamic");
 	BaseMeshComponent->SetSimulatePhysics(false);
 	
+	WheelMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelMeshComp"));
+	WheelMeshComponent->SetupAttachment(BaseMeshComponent);
+	WheelMeshComponent->SetCollisionProfileName("WorldDynamic");
+	
+	HandleMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandleMeshComp"));
+	HandleMeshComponent->SetupAttachment(WheelMeshComponent);
+	HandleMeshComponent->SetCollisionProfileName("VR_Grabbable");
+	
+	GrabComponent->SetupAttachment(HandleMeshComponent);
+	GrabComponent->InitializeGrabComponent(HandleMeshComponent, true);
 	GrabComponent->GrabTypeBase = EGrabTypeBase::CUSTOM;
 	GrabComponent->SetSimulateOnDrop(false);
 	
 	ProgressResetSpeed = 60.0f;
+	InterpToPlayerHandSpeed = 100.0f;
+	HandRotationThresholdToMove = 0.6f;
+	
+	CheckForPlayerEverySecondsForStopTick = 2.0f;
 }
 
 float AHeistWheel::GetProgressNormalized() const
 {
-	return (BaseMeshComponent->GetComponentTransform().GetRotation().Rotator().Roll - InitialOffRotationRoll) / (TargetFullRotationRoll - InitialOffRotationRoll);
+	return (CurrentRotationRoll - InitialOffRotationRoll) / (TargetFullRotationRoll - InitialOffRotationRoll);
 }
 
 void AHeistWheel::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	CurrentRotationRoll = BaseMeshComponent->GetComponentTransform().GetRotation().Rotator().Roll;
+	CurrentRotationRoll = InitialOffRotationRoll;
+	WheelMeshComponent->SetRelativeRotation(FRotator(CurrentRotationRoll, 0.0f, 0.0f));
+	InitialQuat = WheelMeshComponent->GetComponentQuat();
+	LastQuat = InitialQuat;
 }
 
 void AHeistWheel::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
+	
 	UHeistMotionControllerComponent* MotionControllerRef = GrabComponent->GetCurrentMotionControllerHoldingThis();
-	ensure(MotionControllerRef);
 	
-	const FTransform ControllerTransform = MotionControllerRef->GhostHandRef->GetComponentTransform();
-	FTransform BaseTransform = BaseMeshComponent->GetComponentTransform();
-	
-	FRotator CurrentRotationBeforeApply = BaseTransform.GetRotation().Rotator();
-	CurrentRotationBeforeApply.Pitch = 0.0f;
-	CurrentRotationBeforeApply.Yaw = 0.0f;
-	CurrentRotationBeforeApply.Roll = CurrentRotationRoll;
-	
-	BaseTransform.SetRotation(CurrentRotationBeforeApply.Quaternion());
+	const FTransform ControllerTransform = MotionControllerRef->GetComponentTransform();
+	const FTransform BaseTransform = BaseMeshComponent->GetComponentTransform();
 	
 	FTransform ControllerTransformRelativeToLeverBase = ControllerTransform.GetRelativeTransform(BaseTransform);
 	
-	FVector ControllerLocationRelative = ControllerTransformRelativeToLeverBase.GetTranslation();
-	ControllerLocationRelative.Z = 0;
-	ControllerLocationRelative.Y = 0;
+	FVector DirectionFromWheelToHand = ControllerTransformRelativeToLeverBase.GetTranslation();
+	DirectionFromWheelToHand.X = 0.0f;
+	DirectionFromWheelToHand.Normalize();
+	// const FVector WheelDirectionTowardsHandle = UKismetMathLibrary::GetRightVector(WheelTransform.Rotator());
 	
-	ControllerLocationRelative.Normalize();
+	FVector WheelDirectionTowardsHandle =
+	BaseTransform.InverseTransformVector(
+		WheelMeshComponent->GetRightVector()
+	);
+
+	WheelDirectionTowardsHandle.X = 0.0f;
+	WheelDirectionTowardsHandle.Normalize();
 	
-	const float RotationValue = FMath::Clamp(ControllerLocationRelative.Rotation().Pitch, InitialOffRotationRoll, TargetFullRotationRoll);
-	CurrentRotationBeforeApply.Roll = RotationValue;
+	// const float DeltaRotation = (DirectionFromWheelToHand - WheelDirectionTowardsHandle).Rotation().Pitch;
+	
+	// DrawDebugLine(GetWorld(), WheelTransform.GetTranslation(), WheelTransform.GetTranslation() + (DirectionFromWheelToHand * 50.0f), FColor::Red, false, 0.1f, 0, 20.0f);
+	// DrawDebugLine(GetWorld(), WheelTransform.GetTranslation(), WheelTransform.GetTranslation() + (WheelDirectionTowardsHandle * 50.0f), FColor::Blue, false, 0.1f, 0, 20.0f);
+	
+	// const float Dott = FVector::DotProduct(WheelDirectionTowardsHandle, DirectionFromWheelToHand);
+	
+	const float SignedAngleRad = FMath::Atan2(
+	FVector::CrossProduct(WheelDirectionTowardsHandle, DirectionFromWheelToHand).X,
+	FVector::DotProduct(WheelDirectionTowardsHandle, DirectionFromWheelToHand)
+	);
+	float SignedAngleDeg = FMath::RadiansToDegrees(SignedAngleRad) - 180.0f;
+	
+	if (!FMath::IsNearlyZero(SignedAngleRad, HandRotationThresholdToMove))
+	{
+		CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, CurrentRotationRoll + (UKismetMathLibrary::NormalizeAxis(SignedAngleDeg)), DeltaTime, InterpToPlayerHandSpeed);
+		// const float RotationValueBeforeClamp = (-ControllerTransformRelativeToLeverBase.GetTranslation()).ToOrientationQuat().Rotator().Pitch;
+		// CurrentRotationRoll = FMath::Clamp(RotationValueBeforeClamp, InitialOffRotationRoll, TargetFullRotationRoll);
+	
+		// CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, CurrentRotationRoll + DeltaRotation, DeltaTime, 70.0f);
+	
+		CurrentRotationRoll = FMath::Clamp(CurrentRotationRoll, InitialOffRotationRoll, TargetFullRotationRoll);
+		// UE_LOG(LogTemp, Log, TEXT("%f"),  CurrentRotationRoll);
+		const FRotator FinalRotation = FRotator(0.0f, 0, CurrentRotationRoll);
+	
+		WheelMeshComponent->SetRelativeRotation(FinalRotation);
+	}
 	
 	
+	const FTransform HandleTransform = HandleMeshComponent->GetComponentTransform();
+	
+	ControllerTransformRelativeToLeverBase = ControllerTransform.GetRelativeTransform(HandleTransform);
+	
+		
+	ControllerTransformRelativeToLeverBase.SetRotation(HandRotationOffset.Quaternion());
 	ControllerTransformRelativeToLeverBase.SetTranslation(HandLocationOffset);
-	ControllerTransformRelativeToLeverBase.SetRotation((CurrentRotationBeforeApply + HandRotationOffset).Quaternion());
 	
-	ControllerTransformRelativeToLeverBase = ControllerTransformRelativeToLeverBase * BaseTransform;
+	ControllerTransformRelativeToLeverBase = ControllerTransformRelativeToLeverBase * HandleTransform;
 	
-	BaseMeshComponent->SetRelativeRotation(CurrentRotationBeforeApply, false, nullptr, ETeleportType::TeleportPhysics);
-	
-	MotionControllerRef->PhysicsHandRef->SetWorldLocationAndRotation(ControllerTransformRelativeToLeverBase.GetTranslation(), ControllerTransformRelativeToLeverBase.GetRotation(), false, nullptr, ETeleportType::ResetPhysics);
+	MotionControllerRef->PhysicsHandRef->SetWorldLocationAndRotation(ControllerTransformRelativeToLeverBase.GetTranslation()
+		 , ControllerTransformRelativeToLeverBase.GetRotation(), false, nullptr, ETeleportType::ResetPhysics);
 }
 
 void AHeistWheel::Interact_Implementation()
@@ -96,17 +144,53 @@ void AHeistWheel::SetIsInteractable_Implementation(const bool bIsInteractable)
 	bIsWheelInteractable = bIsInteractable;
 }
 
+void AHeistWheel::CheckForPlayerStopTick()
+{
+	if (bShouldGoBackToInitialPositionWhenNotHeld)
+	{
+		if (FMath::IsNearlyEqual(CurrentRotationRoll, InitialOffRotationRoll))
+		{
+			GetWorldTimerManager().ClearTimer(CheckForPlayerStopTickTimerHandle);
+			SetActorTickEnabled(false);
+		}
+	}
+	else if (FMath::IsNearlyZero(WheelMeshComponent->GetPhysicsAngularVelocityInDegrees().Length(), 1.f))
+	{
+		WheelMeshComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		GetWorldTimerManager().ClearTimer(CheckForPlayerStopTickTimerHandle);
+		SetActorTickEnabled(false);
+	}
+}
+
+void AHeistWheel::OnWheelTouchedOrHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+                                      UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (OtherActor->IsA(APawn::StaticClass()))
+	{
+		// Player hit it.
+		SetActorTickEnabled(true);
+		
+		GetWorldTimerManager().ClearTimer(CheckForPlayerStopTickTimerHandle);
+		GetWorldTimerManager().SetTimer(CheckForPlayerStopTickTimerHandle, this, &AHeistWheel::CheckForPlayerStopTick, CheckForPlayerEverySecondsForStopTick, bShouldGoBackToInitialPositionWhenNotHeld);
+	}
+}
+
 void AHeistWheel::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
 	const bool bIsInteractable = Execute_GetIsInteractable(this);
 	const bool bIsBeingHeld = GrabComponent->IsBeingHeld();
-
+	
+	
+	// WheelMeshComponent->SetRelativeRotation(FRotator(CurrentRotationRoll, 0.0f, 0.0f), true, nullptr, ETeleportType::ResetPhysics);
+	
 	const float ProgressNormalized = GetProgressNormalized();
 	
-		
-	BaseMeshComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentRotationRoll));
+	
+	// 
+	
+	
 	
 	switch (LeverInteractionType)
 	{
@@ -162,15 +246,28 @@ void AHeistWheel::Tick(float DeltaTime)
 		return;
 	}
 	
-	if (bShouldGoBackToInitialPositionWhenNotHeld && !bIsBeingHeld)
+	
+	
+	if (!bIsBeingHeld)
 	{
-		CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, InitialOffRotationRoll, DeltaTime, ProgressResetSpeed);
+		if (bShouldGoBackToInitialPositionWhenNotHeld)
+		{
+			CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, InitialOffRotationRoll, DeltaTime, ProgressResetSpeed);
+			WheelMeshComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentRotationRoll), false);
+		}
+		return;
 	}
+	
+	
+	
 }
 
 void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 	UHeistMotionControllerComponent* MotionControllerRef)
 {
+	SetActorTickEnabled(true);
+	GrabComponent->SetComponentTickEnabled(true);
+	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false);
 	else
@@ -180,9 +277,34 @@ void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 void AHeistWheel::OnWheelReleased(UHeistGrabComponent* ReleasedComponent,
 	UHeistMotionControllerComponent* MotionControllerRef)
 {
+	if (!bShouldGoBackToInitialPositionWhenNotHeld)
+	{
+		// Because it will never go back to initial, we will just disable tick here instead.
+		SetActorTickEnabled(false);
+		GrabComponent->SetComponentTickEnabled(false);
+	}
+	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true);
 	else
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
+}
+
+bool AHeistWheel::IsGrabbable_Implementation(const FName BoneHit) const
+{
+	return true;
+}
+
+void AHeistWheel::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	
+	if (GetWorld() && GetWorld()->IsGameWorld())
+	{
+		
+		GrabComponent->OnGrabbed.AddDynamic(this, &AHeistWheel::OnWheelGrabbed);
+		GrabComponent->OnReleased.AddDynamic(this, &AHeistWheel::OnWheelReleased);
+		// WheelMeshComponent->OnComponentHit.AddDynamic(this, &AHeistWheel::OnWheelTouchedOrHit);
+	}
 }
 
