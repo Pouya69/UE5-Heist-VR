@@ -59,6 +59,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Remote Grab")
 		float MinForceThresholdVectorLength;
 	
+	UPROPERTY(EditAnywhere, Category = "Remote Grab")
+		float LengthThresholdForAllowingRemoteGrab;
+	
 	// This will be added as a default for a booster. (to go against gravity etc.)
 	UPROPERTY(EditAnywhere, Category = "Remote Grab")
 		FVector RemoteGrabForceAddition;
@@ -108,6 +111,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Hands | Pistol")
 		void TogglePistolEnabled(const bool bEnabled);
+	
+	bool bCanRemoteGrab_R;
+	bool bCanRemoteGrab_L;
 	
 	// One-time used only
 	UFUNCTION(BlueprintCallable, Category="Hands | Pistol")

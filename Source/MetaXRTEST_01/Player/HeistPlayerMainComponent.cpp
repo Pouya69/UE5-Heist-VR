@@ -23,10 +23,14 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 	MinDotProductRemoteGrabThreshold = 0.2f;
 	MinDotProductCameraRemoteGrabThreshold = 0.7f;
 	MinForceThresholdVectorLength = 3.0f;
+	LengthThresholdForAllowingRemoteGrab = 0.1f;
 	RemoteGrabForceAddition = FVector(0.0f, 0.0f, 300.0f);
 	
 	RemoteGrabDistanceRange = FVector2D(20.0f, 500.0f);
 	RemoteGrabForceRange = FVector2D(150.0f, 800.0f);
+	
+	bCanRemoteGrab_R = false;
+	bCanRemoteGrab_L = false;
 	
 }
 
@@ -68,6 +72,15 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(GetOwner());
 	
+	const FVector CurrentHandMovementDirectionWithLength = RightHandLocation - RightHandPreviousLocation;
+	const float Length = CurrentHandMovementDirectionWithLength.Length();
+	if (!bCanRemoteGrab_R && Length < LengthThresholdForAllowingRemoteGrab)
+	{
+		bCanRemoteGrab_R = true;
+	}
+	
+	if (!bCanRemoteGrab_R) return;
+	
 	const bool bDidRightHit = GetWorld()->SweepSingleByChannel(RightHitResult, RightHandLocation, RightEndLocation, FQuat::Identity, GRAB_CHANNEL, CollisionShape, Params);
 	
 	if (bDidRightHit && IHeistInteractionInterface::Execute_IsRemoteGrabbable(RightHitResult.GetActor()))
@@ -78,12 +91,11 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 		CurrentGrabInFocus_R = RightHitResult.GetComponent();
 		IHeistInteractionInterface::Execute_SetIsInFocus(RightHitResult.GetActor(), true);
 		
-		const FVector CurrentHandMovementDirectionWithLength = RightHandLocation - RightHandPreviousLocation;
+
 		
 		const FVector CastDirectionOpposite = (RightHandLocation - RightEndLocation).GetSafeNormal();
 		
 		const float DotBetweenVelocityAndTrace = FVector::DotProduct(CastDirectionOpposite, CurrentHandMovementDirectionWithLength.GetSafeNormal());
-		const float Length = CurrentHandMovementDirectionWithLength.Length();
 		
 		const float DotBetweenCameraForwardAndTrace = FVector::DotProduct(-CameraComponentRef->GetForwardVector(), CastDirectionOpposite);
 		
@@ -95,12 +107,15 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 			const FVector FinalImpulseDirection = (RightHandLocation - CompLoc).GetSafeNormal() * ForceRelativeToDistance + RemoteGrabForceAddition;
 			CurrentGrabInFocus_R->AddImpulse(FinalImpulseDirection, NAME_None, true);
 			IHeistInteractionInterface::Execute_RemoteGrab(CurrentGrabInFocus_R->GetOwner());
+			
+			bCanRemoteGrab_R = false;
 		}
 	}
 	else
 	{
 		if (CurrentGrabInFocus_R)
 		{
+			bCanRemoteGrab_R = false;
 			IHeistInteractionInterface::Execute_SetIsInFocus(CurrentGrabInFocus_R->GetOwner(), false);
 			CurrentGrabInFocus_R = nullptr;
 		}
@@ -121,6 +136,15 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(GetOwner());
 	
+	const FVector CurrentHandMovementDirectionWithLength = LeftHandLocation - LeftHandPreviousLocation;
+	const float Length = CurrentHandMovementDirectionWithLength.Length();
+	if (!bCanRemoteGrab_L && Length < LengthThresholdForAllowingRemoteGrab)
+	{
+		bCanRemoteGrab_L = true;
+	}
+	
+	if (!bCanRemoteGrab_L) return;
+	
 	const bool bDidLeftHit = GetWorld()->SweepSingleByChannel(LeftHitResult, LeftHandLocation, LeftEndLocation, FQuat::Identity, GRAB_CHANNEL, CollisionShape, Params);
 	
 	if (bDidLeftHit && IHeistInteractionInterface::Execute_IsRemoteGrabbable(LeftHitResult.GetActor()))
@@ -131,11 +155,9 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 		CurrentGrabInFocus_L = LeftHitResult.GetComponent();
 		IHeistInteractionInterface::Execute_SetIsInFocus(LeftHitResult.GetActor(), true);
 		
-		const FVector CurrentHandMovementDirectionWithLength = LeftHandLocation - LeftHandPreviousLocation;
 		const FVector CastDirectionOpposite = (LeftHandLocation - LeftEndLocation).GetSafeNormal();
 		
 		const float DotBetweenVelocityAndTrace = FVector::DotProduct(CastDirectionOpposite, CurrentHandMovementDirectionWithLength.GetSafeNormal());
-		const float Length = CurrentHandMovementDirectionWithLength.Length();
 		
 		const float DotBetweenCameraForwardAndTrace = FVector::DotProduct(-CameraComponentRef->GetForwardVector(), CastDirectionOpposite);
 		
@@ -147,12 +169,15 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 			const FVector FinalImpulseDirection = (LeftHandLocation - CompLoc).GetSafeNormal() * ForceRelativeToDistance + RemoteGrabForceAddition;
 			CurrentGrabInFocus_L->AddImpulse(FinalImpulseDirection, NAME_None, true);
 			IHeistInteractionInterface::Execute_RemoteGrab(CurrentGrabInFocus_L->GetOwner());
+			
+			bCanRemoteGrab_L = false;
 		}
 	}
 	else
 	{
 		if (CurrentGrabInFocus_L)
 		{
+			bCanRemoteGrab_L = false;
 			IHeistInteractionInterface::Execute_SetIsInFocus(CurrentGrabInFocus_L->GetOwner(), false);
 			CurrentGrabInFocus_L = nullptr;
 		}
