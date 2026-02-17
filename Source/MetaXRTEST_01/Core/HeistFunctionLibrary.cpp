@@ -56,15 +56,36 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 	// Instant
 	ObjectToAffect->CustomTimeDilation = DilationAmount;
 	
+	UPrimitiveComponent* ObjectPrimComp = Cast<UPrimitiveComponent>(ObjectToAffect->GetRootComponent());
+	FBodyInstance* ObjectBodyInstance;
+	if (ObjectPrimComp)
+	{
+		ObjectBodyInstance = ObjectPrimComp->GetBodyInstance();
+		ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * DilationAmount, false);
+		ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * DilationAmount, false);
+		ObjectBodyInstance->SetMassScale(ObjectBodyInstance->MassScale * (1 / DilationAmount));
+		ObjectBodyInstance->SetEnableGravity(false);
+	}
+	
+	
 	if (Duration > 0.0f)
 	{
 		FTimerHandle NewGlobalTimeDilationTimerHandle;
 		// Timer based to go back to normal.
 		
 		FTimerDelegate Delegate;
-		Delegate.BindLambda([ObjectWorld, Duration, ObjectToAffect]()
+		Delegate.BindLambda([ObjectWorld, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount]()
 		{
 			ObjectToAffect->CustomTimeDilation = 1.0f;
+			
+			const float NewDilation = 1 / DilationAmount;
+			if (ObjectBodyInstance)
+			{
+				ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * NewDilation, false);
+				ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * NewDilation, false);
+				ObjectBodyInstance->SetMassScale(ObjectBodyInstance->MassScale * DilationAmount);
+				ObjectBodyInstance->SetEnableGravity(true);
+			}
 		});
 		
 		ObjectWorld->GetTimerManager().SetTimer(OutTimeDilationTimerHandle, Delegate, Duration, false);

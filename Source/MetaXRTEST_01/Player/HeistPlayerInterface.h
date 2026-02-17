@@ -36,4 +36,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		bool ChangeSize(EHeistSize PlayerSize);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void PistolEquipped();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void PistolUnequipped();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void PistolTriggerHeldDown();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void PistolTriggerReleased();
 };

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "HeistPistol.generated.h"
 
+class UHeistPistolAnimInstance;
 class UNiagaraSystem;
 class AHeistBullet;
 
@@ -27,6 +28,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category="Pistol")
 		FName PistolMuzzleSocketName;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pistol")
+		TObjectPtr<UHeistPistolAnimInstance> PistolAnimInstance;
+	
 	UFUNCTION(BlueprintCallable, Category="Pistol")
 		bool ShootPistol();
 	
@@ -39,6 +43,16 @@ public:
 		float PistolTriggerAlpha;
 	
 	USkeletalMeshComponent* GetPistolSkeletalMeshComponent();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Pistol | Equip")
+		void OnHeistPistolEquipped();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Pistol | Equip")
+		void OnHeistPistolUnequipped();
+	
+	UPROPERTY(BlueprintReadOnly, Category="Pistol | Equip")
+		bool bIsRightHandEquipped;
+	
 protected:
 	virtual void BeginPlay() override;
 	

@@ -36,11 +36,19 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 protected:
+	FTimerHandle DestroyTimerHandle;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Bullet | Pooling")
+		float DestroyBulletAfterSecondsAutomatically;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Bullet | Pooling")
 		AHeistPistol* PistolReference;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Bullet")
 		float TargetTimeDilation;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
+		float TargetTimeDilationDuration;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<USphereComponent> BulletSphereComponent;

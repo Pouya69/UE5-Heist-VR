@@ -2,6 +2,7 @@
 
 #include "HeistPistol.h"
 
+#include "HeistPistolAnimInstance.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Environment/HeistBullet.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,10 @@ AHeistPistol::AHeistPistol()
 	
 	PistolMuzzleSocketName = "Muzzle";
 	StartingAmountOfBulletsInPool = 25;
+	
+	bIsRightHandEquipped = true;
+	
+	TargetTimeDilation = 0.1f;
 }
 
 void AHeistPistol::CustomPistolTick(const float Alpha)
@@ -25,9 +30,12 @@ void AHeistPistol::CustomPistolTick(const float Alpha)
 	PistolTriggerAlpha = Alpha;
 }
 
+
 void AHeistPistol::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	
+	PistolAnimInstance = Cast<UHeistPistolAnimInstance>(PistolMeshComponent->GetAnimInstance());
 }
 
 void AHeistPistol::TogglePistolEnabled(const bool bEnabled)
@@ -38,9 +46,12 @@ void AHeistPistol::TogglePistolEnabled(const bool bEnabled)
 	if (bEnabled)
 	{
 		PistolMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+		// PistolMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);	
+		OnHeistPistolEquipped();
 	}
 	else
 	{
+		OnHeistPistolUnequipped();
 		PistolMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);	
 	}
 }
@@ -49,13 +60,19 @@ bool AHeistPistol::ShootPistol()
 {
 	if (!bIsPistolEnabled) return false;
 	
+	if (NotActivePool.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Bullet Pool is Empty..."));
+		return false;
+	}
+	
 	const FTransform BulletSpawnTransform = PistolMeshComponent->GetSocketTransform(PistolMuzzleSocketName);
 	
 	AHeistBullet* BulletFromPool;
 	const bool bDidGrabFromPool = NotActivePool.Dequeue(BulletFromPool);
-	ensure(bDidGrabFromPool);
+	// ensure(bDidGrabFromPool);
 	
-	if (!bDidGrabFromPool)
+	if (!BulletFromPool || BulletFromPool->bIsActiveBullet)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Bullet Pool is Empty..."));
 		return false;
@@ -80,8 +97,9 @@ void AHeistPistol::InitializeBulletPools()
 	
 	for (int i = 0; i < StartingAmountOfBulletsInPool; ++i)
 	{
-		AHeistBullet* BulletSpawned = GetWorld()->SpawnActor<AHeistBullet>(BulletClass, FTransform::Identity, SpawnParams);
+		AHeistBullet* BulletSpawned = GetWorld()->SpawnActorDeferred<AHeistBullet>(BulletClass, FTransform::Identity, SpawnParams.Owner, SpawnParams.Instigator, SpawnParams.SpawnCollisionHandlingOverride);
 		BulletSpawned->InitializeBullet_FirstTime(this);
+		BulletSpawned->FinishSpawning(FTransform::Identity);
 	}
 }
 

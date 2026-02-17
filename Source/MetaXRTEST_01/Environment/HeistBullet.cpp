@@ -10,6 +10,8 @@
 #include "Player/Inventory_Objects/HeistPistol.h"
 #include "NiagaraComponent.h"
 #include "Components/SphereComponent.h"
+#include "Core/HeistFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 AHeistBullet::AHeistBullet()
@@ -23,7 +25,14 @@ AHeistBullet::AHeistBullet()
 	SetRootComponent(BulletSphereComponent);
 	
 	BulletProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("BulletProjectileMovementComp");
-	BulletProjectileMovementComponent->bAutoActivate = false;
+	// BulletProjectileMovementComponent->bAutoActivate = false;
+	BulletProjectileMovementComponent->ProjectileGravityScale = 0.0f;
+	BulletProjectileMovementComponent->Bounciness = 0.0f;
+	BulletProjectileMovementComponent->Friction = 5.0f;
+	BulletProjectileMovementComponent->bInterpMovement = true;
+	BulletProjectileMovementComponent->InitialSpeed = 500.0f;
+	BulletProjectileMovementComponent->MaxSpeed = 500.0f;
+	BulletProjectileMovementComponent->Velocity = FVector(500.0f, 0.0f, 0.0f);
 	BulletProjectileMovementComponent->SetComponentTickEnabled(false);
 	
 	BulletLoopedAudioComp = CreateDefaultSubobject<UAudioComponent>("BulletLoopedAudioComp");
@@ -35,11 +44,18 @@ AHeistBullet::AHeistBullet()
 	BulletLoopedFX->bAutoActivate = false;
 	BulletLoopedFX->SetComponentTickEnabled(false);
 	BulletLoopedFX->SetupAttachment(BulletSphereComponent);
+	
+	TargetTimeDilationDuration = 4.0f;
+	
+	DestroyBulletAfterSecondsAutomatically = 8.0f;
 }
 
 void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const float BulletTargetTimeDilation)
 {
 	CustomTimeDilation = 1.0f / UGameplayStatics::GetGlobalTimeDilation(GetWorld());  // Make it move independetly.
+	
+	SetActorTransform(BulletTransform);
+	
 	TargetTimeDilation = BulletTargetTimeDilation;
 	bIsActiveBullet = true;
 	
@@ -48,14 +64,24 @@ void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const flo
 	BulletSphereComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 	BulletSphereComponent->SetVisibility(true);
 	
-	BulletProjectileMovementComponent->Activate();
-	BulletProjectileMovementComponent->SetComponentTickEnabled(true);
-	
 	BulletLoopedAudioComp->Activate();
 	BulletLoopedAudioComp->SetComponentTickEnabled(true);
 	
 	BulletLoopedFX->Activate();
 	BulletLoopedFX->SetComponentTickEnabled(true);
+	
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&, BulletTransform]()
+	{
+		BulletProjectileMovementComponent->SetComponentTickEnabled(true);
+		BulletProjectileMovementComponent->Activate();
+		BulletProjectileMovementComponent->Velocity = UKismetMathLibrary::GetForwardVector(BulletTransform.Rotator()) * BulletProjectileMovementComponent->InitialSpeed;
+		BulletProjectileMovementComponent->UpdateComponentVelocity();
+		BulletProjectileMovementComponent->bSimulationEnabled = true;
+	});
+	GetWorldTimerManager().SetTimerForNextTick(Delegate);
+	
+	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AHeistBullet::AddBulletToPool, DestroyBulletAfterSecondsAutomatically, false);
 }
 
 void AHeistBullet::InitializeBullet_FirstTime(AHeistPistol* InHeistPistol)
@@ -63,11 +89,15 @@ void AHeistBullet::InitializeBullet_FirstTime(AHeistPistol* InHeistPistol)
 	BulletSphereComponent->IgnoreActorWhenMoving(PistolReference, true);
 	PistolReference = InHeistPistol;
 	
+	PistolReference->GetPistolSkeletalMeshComponent()->IgnoreActorWhenMoving(this, true);
+	
 	AddBulletToPool();
 }
 
 void AHeistBullet::AddBulletToPool()
 {
+	GetWorldTimerManager().ClearTimer(DestroyTimerHandle);
+	
 	SetActorTickEnabled(false);
 	
 	BulletSphereComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
@@ -75,6 +105,9 @@ void AHeistBullet::AddBulletToPool()
 	
 	BulletProjectileMovementComponent->Deactivate();
 	BulletProjectileMovementComponent->SetComponentTickEnabled(false);
+	FHitResult HitResult;
+	BulletProjectileMovementComponent->StopSimulating(HitResult);
+	BulletProjectileMovementComponent->StopMovementImmediately();
 	
 	BulletLoopedAudioComp->Deactivate();
 	BulletLoopedAudioComp->SetComponentTickEnabled(false);
@@ -87,13 +120,15 @@ void AHeistBullet::AddBulletToPool()
 	PistolReference->ResetBulletAndAddBackToPool(this);
 	
 	bIsActiveBullet = false;
+	
+	CustomTimeDilation = 1.0f;
 }
 
 void AHeistBullet::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	
-	CustomTimeDilation = 1.0f / UGameplayStatics::GetGlobalTimeDilation(this);
+	
 }
 
 void AHeistBullet::PostInitializeComponents()
@@ -107,6 +142,8 @@ void AHeistBullet::PostInitializeComponents()
 void AHeistBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (!PistolReference || !bIsActiveBullet) return;
+	
 	AddBulletToPool();
 	
 	const FVector EffectLocation = Hit.ImpactPoint;
@@ -115,5 +152,8 @@ void AHeistBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, BulletImpactFX, Hit.ImpactPoint, EffectRotation);
 	UGameplayStatics::SpawnSoundAtLocation(this, BulletImpactSound, EffectLocation, EffectRotation);
 	
-	OtherActor->CustomTimeDilation = TargetTimeDilation;
+	FTimerHandle TimerHandle;
+	UHeistFunctionLibrary::SetTimeDilationOfObject(TimerHandle, OtherActor, TargetTimeDilation, TargetTimeDilationDuration);
+	
+	// OtherActor->CustomTimeDilation = TargetTimeDilation;
 }

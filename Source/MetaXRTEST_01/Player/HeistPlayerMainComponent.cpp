@@ -46,6 +46,8 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(USkeletalMeshComponent
 	PistolAttachedToHand = InHeistPistol;
 	RightPhysicsHandRef->IgnoreActorWhenMoving(PistolAttachedToHand, true);
 	PistolAttachedToHand->GetPistolSkeletalMeshComponent()->IgnoreActorWhenMoving(GetOwner(), true);
+	PistolAttachedToHand->GetPistolSkeletalMeshComponent()->IgnoreComponentWhenMoving(RightPhysicsHandRef, true);
+	PistolAttachedToHand->bIsRightHandEquipped = true;
 	PistolAttachedToHand->InitializeBulletPools();
 	TogglePistolEnabled(false);
 	
@@ -213,7 +215,8 @@ void UHeistPlayerMainComponent::TogglePistolEnabled(const bool bEnabled)
 {
 	if (bEnabled)
 	{
-		PistolAttachedToHand->AttachToComponent(RightPhysicsHandRef, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true));
+		PistolAttachedToHand->GetPistolSkeletalMeshComponent()->SetSimulatePhysics(false);
+		PistolAttachedToHand->AttachToComponent(RightPhysicsHandRef, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "weapon_r_socket");
 	}
 	else
 	{
