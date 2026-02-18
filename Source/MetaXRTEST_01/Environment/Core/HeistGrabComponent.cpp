@@ -216,8 +216,15 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 			{
 				// One hand is already grabbing this. We grab it with the second hand.
 				PhysicsConstraintGrabbingThis_02 = HandPhysicsConstraint;
+				PhysicsConstraintGrabbingThis->BreakConstraint();
+				// PhysicsConstraintGrabbingThis->UpdateConstraintFrames();
+				FTransform TransformBeforeAttachment = PrimitiveComponent->GetComponentTransform();
+				PhysicsConstraintGrabbingThis->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
 				PhysicsConstraintGrabbingThis_02->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
 				PhysicsConstraintGrabbingThis_02->UpdateConstraintFrames();
+				PhysicsConstraintGrabbingThis->UpdateConstraintFrames();
+				
+				PrimitiveComponent->SetWorldTransform(TransformBeforeAttachment, true, nullptr, ETeleportType::TeleportPhysics);
 				bIsHeld_02 = true;
 			}
 			else
