@@ -18,7 +18,7 @@ AHeistPistol::AHeistPistol()
 	SetRootComponent(PistolMeshComponent);
 	
 	PistolMuzzleSocketName = "Muzzle";
-	StartingAmountOfBulletsInPool = 25;
+	StartingAmountOfBulletsInPool = 28;
 	
 	bIsRightHandEquipped = true;
 	
@@ -111,6 +111,15 @@ void AHeistPistol::ResetBulletAndAddBackToPool(AHeistBullet* Bullet)
 USkeletalMeshComponent* AHeistPistol::GetPistolSkeletalMeshComponent()
 {
 	return PistolMeshComponent;
+}
+
+void AHeistPistol::InitializePistol(USkeletalMeshComponent* HandToAttachTo, const bool bIsRightHand)
+{
+	// HandToAttachTo->IgnoreActorWhenMoving(this, true);
+	// GetPistolSkeletalMeshComponent()->IgnoreActorWhenMoving(GetOwner(), true);
+	// GetPistolSkeletalMeshComponent()->IgnoreComponentWhenMoving(HandToAttachTo, true);
+	bIsRightHandEquipped = bIsRightHand;
+	InitializeBulletPools();
 }
 
 void AHeistPistol::BeginPlay()

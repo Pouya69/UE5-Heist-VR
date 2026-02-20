@@ -2,3 +2,8 @@
 
 
 #include "HeistPlayerState.h"
+
+void AHeistPlayerState::PickedUpPistol()
+{
+	bHasPistol = true;
+}

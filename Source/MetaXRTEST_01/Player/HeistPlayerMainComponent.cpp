@@ -4,13 +4,18 @@
 #include "HeistPlayerMainComponent.h"
 
 #include "HeistMotionControllerComponent.h"
+#include "HeistPlayerInterface.h"
 #include "HeistPlayerState.h"
 #include "Camera/CameraComponent.h"
+#include "Core/HeistFunctionLibrary.h"
+#include "Core/HeistGameMode.h"
 #include "Core/HeistInteractionInterface.h"
 #include "Core/HeistTypes.h"
 #include "Environment/Core/HeistGrabComponent.h"
 #include "Inventory_Objects/HeistPistol.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "PhysicsEngine/PhysicsConstraintComponent.h"
 
 
 UHeistPlayerMainComponent::UHeistPlayerMainComponent()
@@ -34,21 +39,23 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 	
 }
 
-void UHeistPlayerMainComponent::InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef,
+void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSize, const float InPlayerRadius, const float InPlayerCapsuleHalfHeight, USkeletalMeshComponent* InRightGhostHandRef,
                                                           USkeletalMeshComponent* InRightPhysicsHandRef, USkeletalMeshComponent* InLeftGhostHandRef,
-                                                          USkeletalMeshComponent* InLeftPhysicsHandRef,
+                                                          USkeletalMeshComponent* InLeftPhysicsHandRef, UPhysicsConstraintComponent* InRightHandPhysicsConstraint, UPhysicsConstraintComponent* InLeftHandPhysicsConstraint,
                                                           UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
                                                           UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol)
 {
+	CurrentSize = InCurrentSize;
+	PlayerCapsuleHalfHeight = InPlayerCapsuleHalfHeight;
+	PlayerRadius = InPlayerRadius;
+	
 	RightGhostHandRef = InRightGhostHandRef;
 	RightPhysicsHandRef = InRightPhysicsHandRef;
+	RightHandPhysicsConstraint = InRightHandPhysicsConstraint;
+	LeftHandPhysicsConstraint = InLeftHandPhysicsConstraint;
 	
 	PistolAttachedToHand = InHeistPistol;
-	RightPhysicsHandRef->IgnoreActorWhenMoving(PistolAttachedToHand, true);
-	PistolAttachedToHand->GetPistolSkeletalMeshComponent()->IgnoreActorWhenMoving(GetOwner(), true);
-	PistolAttachedToHand->GetPistolSkeletalMeshComponent()->IgnoreComponentWhenMoving(RightPhysicsHandRef, true);
-	PistolAttachedToHand->bIsRightHandEquipped = true;
-	PistolAttachedToHand->InitializeBulletPools();
+	InHeistPistol->InitializePistol(RightPhysicsHandRef, true);
 	TogglePistolEnabled(false);
 	
 	RightMotionControllerRef = InRightMotionControllerRef;
@@ -226,7 +233,79 @@ void UHeistPlayerMainComponent::TogglePistolEnabled(const bool bEnabled)
 	PistolAttachedToHand->TogglePistolEnabled(bEnabled);
 }
 
+bool UHeistPlayerMainComponent::ChangeSizeTo(EHeistSize NewSize, const FVector NewLocation)
+{
+	AActor* OwnerActor = GetOwner();
+	
+	IHeistPlayerInterface::Execute_SetupBothHandsBonePhysicsAndWeightRightHand_CPP(OwnerActor, false, true);
+	// RightPhysicsHandRef->SetSimulatePhysics(false);
+	// LeftPhysicsHandRef->SetSimulatePhysics(false);
+	
+	// const FVector HandScale = UHeistFunctionLibrary::GetNewSizeOfComponent(RightPhysicsHandRef, NewSize, false);
+	
+	// RightPhysicsHandRef->SetRelativeScale3D(HandScale);
+	// LeftPhysicsHandRef->SetRelativeScale3D(HandScale);
+	
+	// RightPhysicsHandRef->SetBoundsScale(RightPhysicsHandRef->BoundsScale * UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize));
+	// LeftPhysicsHandRef->SetBoundsScale(LeftPhysicsHandRef->BoundsScale * UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize));
+	
+	// RightPhysicsHandRef->scale
+	// RightPhysicsHandRef->SetAllMassScale(ScaleMultDifference);
+	// LeftPhysicsHandRef->SetAllMassScale(ScaleMultDifference);
+
+	FVector CameraLocation = CameraComponentRef->GetRelativeLocation();
+	CameraLocation.Z = 0.0f;  // Just like the Move event.
+	
+	const FRotator YawOnlyOwner = FRotator(0.0f, OwnerActor->GetActorRotation().Yaw, 0.0f);
+	CameraLocation = YawOnlyOwner.RotateVector(CameraLocation);
+	
+	FVector FinalTeleportLocation;
+	if (NewLocation.IsNearlyZero())
+	{
+		const FVector Start = CameraComponentRef->GetComponentLocation();
+		const FVector End = Start - FVector(0.0f, 0.0f, PlayerCapsuleHalfHeight);
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(OwnerActor);
+		CollisionParams.AddIgnoredComponent(RightPhysicsHandRef.Get());
+		CollisionParams.AddIgnoredComponent(LeftPhysicsHandRef.Get());
+		
+		const bool bWasHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_WorldStatic, CollisionParams);
+		
+		if (!bWasHit)
+			HitResult.ImpactPoint = End;
+		FinalTeleportLocation = HitResult.ImpactPoint - CameraLocation;
+	}
+	else
+	{
+		FinalTeleportLocation = NewLocation - CameraLocation;
+	}
+	
+	// bool bResult = UHeistFunctionLibrary::ChangeSizeTo(OwnerActor, NewSize, FinalTeleportLocation, YawOnlyOwner);
+	// OwnerActor->TeleportTo(FinalTeleportLocation, YawOnlyOwner);
+	
+	
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UHeistPlayerMainComponent::PlayerChangedSize, 0.2f, false);
+	
+	AHeistGameMode* GM = GetWorld()->GetAuthGameMode<AHeistGameMode>();
+	GM->ChangePlayerSize(NewSize);
+	
+	return true;
+}
+
+void UHeistPlayerMainComponent::PlayerChangedSize()
+{
+	IHeistPlayerInterface::Execute_SetupBothHandsBonePhysicsAndWeightRightHand_CPP(GetOwner(), true, true);
+	// RightHandPhysicsConstraint->SetLinearPositionTarget()
+	//RightHandPhysicsConstraint->UpdateConstraintFrames();
+	//LeftHandPhysicsConstraint->UpdateConstraintFrames();
+}
+
 void UHeistPlayerMainComponent::PickedUpPistol()
 {
+	AHeistPlayerState* PlayerState = Cast<AHeistPlayerState>(UGameplayStatics::GetPlayerState(GetWorld(), 0));
+	PlayerState->PickedUpPistol();
+	
 	TogglePistolEnabled(true);
 }

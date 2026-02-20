@@ -7,6 +7,8 @@
 #include "HeistPlayerMainComponent.generated.h"
 
 
+class UPhysicsConstraintComponent;
+enum class EHeistSize : uint8;
 class AHeistPistol;
 class UCameraComponent;
 class UHeistMotionControllerComponent;
@@ -76,12 +78,23 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Hand Equipments")
 		TObjectPtr<AHeistPistol> PistolAttachedToHand;
+	
+	float PlayerRadius;
+	float PlayerCapsuleHalfHeight;
 
 public:
+	UPROPERTY(BlueprintReadWrite, Category="Size")
+		EHeistSize CurrentSize;
+	
+	UPROPERTY()
+		UPhysicsConstraintComponent* RightHandPhysicsConstraint;
+	
+	UPROPERTY()
+		UPhysicsConstraintComponent* LeftHandPhysicsConstraint;
 	
 	UFUNCTION(BlueprintCallable)
-	void InitializePlayerComponent(USkeletalMeshComponent* InRightGhostHandRef, USkeletalMeshComponent* InRightPhysicsHandRef,
-		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef,
+	void InitializePlayerComponent(EHeistSize InCurrentSize, const float InPlayerRadius, const float InPlayerCapsuleHalfHeight, USkeletalMeshComponent* InRightGhostHandRef, USkeletalMeshComponent* InRightPhysicsHandRef,
+		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef, UPhysicsConstraintComponent* InRightHandPhysicsConstraint, UPhysicsConstraintComponent* InLeftHandPhysicsConstraint,
 		UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
 		UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol);
 	
@@ -114,6 +127,12 @@ public:
 	
 	bool bCanRemoteGrab_R;
 	bool bCanRemoteGrab_L;
+	
+	UFUNCTION(BlueprintCallable, Category="Change Size")
+		bool ChangeSizeTo(EHeistSize NewSize, const FVector NewLocation);
+	
+	UFUNCTION()
+		void PlayerChangedSize();
 	
 	// One-time used only
 	UFUNCTION(BlueprintCallable, Category="Hands | Pistol")

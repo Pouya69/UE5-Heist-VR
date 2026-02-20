@@ -115,3 +115,106 @@ bool UHeistFunctionLibrary::RestoreTimeToNormalForObject(AActor* ObjectToAffect,
 	
 	return true;
 }
+
+bool UHeistFunctionLibrary::ChangeSizeTo(AActor* ObjectToAffect, EHeistSize NewSize, const FVector NewLocation, const FRotator NewRotation)
+{
+	if (ObjectToAffect == nullptr || ObjectToAffect->IsA(APawn::StaticClass())) return false;
+
+	if (!ObjectToAffect->Implements<UHeistInteractionInterface>())
+	{
+		return false;
+	}
+	
+	EHeistSize CurrentSize = IHeistInteractionInterface::Execute_GetCurrentSizeOfGameObject(ObjectToAffect);
+	
+	if (CurrentSize == NewSize) return false;
+	
+	
+	if (!NewLocation.IsNearlyZero())
+		ObjectToAffect->TeleportTo(NewLocation, NewRotation);
+	
+	ObjectToAffect->SetActorScale3D(GetNewSizeOfGameObject(ObjectToAffect, NewSize));
+	IHeistInteractionInterface::Execute_SetNewSizeTo(ObjectToAffect, NewSize);
+	return true;
+}
+
+FVector UHeistFunctionLibrary::GetNewSizeOfGameObject(AActor* ObjectToAffect, EHeistSize NewSize)
+{
+	FVector NewScale = ObjectToAffect->GetActorScale3D();
+	switch (NewSize)
+	{
+	case EHeistSize::MEDIUM:
+		NewScale *= MEDIUM_SIZE_MULT;
+		break;
+	case EHeistSize::TINY:
+		NewScale *= TINY_SIZE_MULT;
+		break;
+	default:
+		break;
+	}
+	
+	return NewScale;
+}
+
+FVector UHeistFunctionLibrary::GetNewSizeOfComponent(USceneComponent* ComponentToAffect, EHeistSize NewSize, const bool bIsWorldSpace)
+{
+	FVector NewScale = bIsWorldSpace ? ComponentToAffect->GetComponentScale() : ComponentToAffect->GetRelativeScale3D();
+	switch (NewSize)
+	{
+	case EHeistSize::MEDIUM:
+		NewScale *= MEDIUM_SIZE_MULT;
+		break;
+	case EHeistSize::TINY:
+		NewScale *= TINY_SIZE_MULT;
+		break;
+	default:
+		break;
+	}
+	
+	return NewScale;
+}
+
+float UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(EHeistSize NewSize)
+{
+	switch (NewSize)
+	{
+	case EHeistSize::MEDIUM:
+		return MEDIUM_SIZE_MULT;
+	case EHeistSize::TINY:
+		return TINY_SIZE_MULT;
+	default:
+		break;
+	}
+	
+	return 1.0f;
+}
+
+float UHeistFunctionLibrary::GetSizeMultiplierBasedOnType_CHANGE(EHeistSize NewSize)
+{
+	switch (NewSize)
+	{
+		case EHeistSize::MEDIUM:
+			return TINY_SIZE_MULT;
+		case EHeistSize::TINY:
+			return MEDIUM_SIZE_MULT;
+		default:
+			break;
+	}
+	
+	return 1.0f;
+}
+
+float UHeistFunctionLibrary::GetAbsoluteSizeBasedOnType(EHeistSize NewSize)
+{
+	switch (NewSize)
+	{
+	case EHeistSize::MEDIUM:
+		return 1.0f;
+	case EHeistSize::TINY:
+		return 1000.0f;
+	default:
+		break;
+	}
+	
+	return 1.0f;
+}

@@ -18,4 +18,13 @@ class METAXRTEST_01_API AHeistPlayerState : public APlayerState
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Player")
 		TObjectPtr<UHeistPlayerMainComponent> HeistPlayerMainComponentRef;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Player")
+		bool bHasPistol;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Player")
+		bool bHasChangeSizeTool;
+	
+	UFUNCTION(BlueprintCallable, Category = "Player")
+		void PickedUpPistol();
 };

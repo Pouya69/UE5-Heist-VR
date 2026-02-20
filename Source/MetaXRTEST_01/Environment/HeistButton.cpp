@@ -68,7 +68,7 @@ void AHeistButton::OnTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AA
 {
 	if (bIsButtonActive) return;
 
-	if (OtherComp->GetPhysicsLinearVelocity().Length() <= ButtonActivationForceThreshold) return;
+	// if (OtherComp->GetPhysicsLinearVelocity().Length() <= ButtonActivationForceThreshold) return;
 	
 	SetActorTickEnabled(true);
 	

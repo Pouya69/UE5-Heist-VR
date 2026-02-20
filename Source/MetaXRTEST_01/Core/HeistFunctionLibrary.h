@@ -37,5 +37,22 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Time")
 		static bool RestoreTimeToNormalForObject(AActor* ObjectToAffect, UPARAM(ref) FTimerHandle& TimeDilationTimerHandle);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Size")
+		static bool ChangeSizeTo(AActor* ObjectToAffect, EHeistSize NewSize, const FVector NewLocation = FVector::ZeroVector, const FRotator NewRotation = FRotator::ZeroRotator);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Size")
+		static FVector GetNewSizeOfGameObject(AActor* ObjectToAffect, EHeistSize NewSize);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Size")
+		static FVector GetNewSizeOfComponent(USceneComponent* ComponentToAffect, EHeistSize NewSize, const bool bIsWorldSpace = true);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Size")
+		static float GetSizeMultiplierBasedOnType(EHeistSize NewSize);
+	
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Size")
+		static float GetSizeMultiplierBasedOnType_CHANGE(EHeistSize NewSize);
 		
+	UFUNCTION(BlueprintCallable, Category="Heist Function Library | Gameplay | Size")
+		static float GetAbsoluteSizeBasedOnType(EHeistSize NewSize);
 };

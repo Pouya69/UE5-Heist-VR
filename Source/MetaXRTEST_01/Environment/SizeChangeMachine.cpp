@@ -4,6 +4,7 @@
 #include "SizeChangeMachine.h"
 
 #include "Components/SplineComponent.h"
+#include "Core/HeistFunctionLibrary.h"
 #include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
 #include "Kismet/GameplayStatics.h"
@@ -26,6 +27,7 @@ ASizeChangeMachine::ASizeChangeMachine()
 	GrabComponent->SetupAttachment(Machine_SK_Component, "hand_l");
 	GrabComponent->InitializeGrabComponent(Machine_SK_Component);
 	GrabComponent->SetSimulateOnDrop(false);
+	Machine_SK_Component->SetSimulatePhysics(false);
 	GrabComponent->GrabTypeBase = EGrabTypeBase::CUSTOM;
 	
 	SecondGrabComponent = CreateDefaultSubobject<UHeistGrabComponent>("SecondGrabComp");
@@ -39,6 +41,11 @@ ASizeChangeMachine::ASizeChangeMachine()
 	
 	RightHandMovementSplineComponent = CreateDefaultSubobject<USplineComponent>("RightHandMovementSplineComp");
 	RightHandMovementSplineComponent->SetupAttachment(Machine_SK_Component);
+	
+	TeleportDestinationSceneComponent = CreateDefaultSubobject<USceneComponent>("TeleportDestinationSceneComp");
+	TeleportDestinationSceneComponent->SetupAttachment(Machine_SK_Component);
+	TeleportDestinationSceneComponent->bAutoActivate = false;
+	TeleportDestinationSceneComponent->SetComponentTickEnabled(false);
 	
 	Max_Y_Distance_FromGrabComps = 60.0f;
 	
@@ -59,10 +66,26 @@ bool ASizeChangeMachine::IsGrabbableBasedOnBoneHit(const FName BoneHit) const
 	return BoneHit != NAME_None && AcceptableBonesToGrab.Contains(BoneHit);
 }
 
+FVector ASizeChangeMachine::GetNewPlayerLocationAfterTeleport() const
+{
+	FTransform TeleportTransform = TeleportDestinationSceneComponent->GetComponentTransform();
+	const float Multiplier = UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize);
+	TeleportTransform.SetTranslationAndScale3D(TeleportTransform.GetTranslation() * Multiplier, TeleportTransform.GetScale3D() * Multiplier);
+	return TeleportTransform.GetTranslation();
+}
+
 
 bool ASizeChangeMachine::IsGrabbable_Implementation(const FName BoneHit) const
 {
-	return IsGrabbableBasedOnBoneHit(BoneHit);
+	return bIsGrabbableActive && IsGrabbableBasedOnBoneHit(BoneHit);
+}
+
+void ASizeChangeMachine::OnPlayerChangeSize(EHeistSize NewPlayerSize)
+{
+	Super::OnPlayerChangeSize(NewPlayerSize);
+	
+	LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
+	RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 }
 
 void ASizeChangeMachine::PostInitializeComponents()
@@ -82,6 +105,7 @@ void ASizeChangeMachine::PostInitializeComponents()
 			RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 		}
 	}	
+	
 }
 
 bool ASizeChangeMachine::IsReadyToPressButtons() const
@@ -96,7 +120,7 @@ bool ASizeChangeMachine::IsReadyToUseSizeMachine() const
 
 bool ASizeChangeMachine::ChangePlayerSize()
 {
-	const bool bSuccess = IHeistPlayerInterface::Execute_ChangeSize(UGameplayStatics::GetPlayerPawn(this, 0), MachinePlayerSizeChange);
+	const bool bSuccess = IHeistPlayerInterface::Execute_ChangeSize(UGameplayStatics::GetPlayerPawn(this, 0), MachinePlayerSizeChange, GetNewPlayerLocationAfterTeleport());
 	
 	return bSuccess;
 }
@@ -119,6 +143,15 @@ void ASizeChangeMachine::OnHandleGrabbed(UHeistGrabComponent* GrabbedComponent,
 		// Both handles are grabbed.
 	}
 	
+	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+	{
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false, false);
+	}
+	else
+	{
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false, false);
+	}
+	
 	SetActorTickEnabled(true);
 }
 
@@ -138,6 +171,15 @@ void ASizeChangeMachine::OnHandleReleased(UHeistGrabComponent* ReleasedComponent
 	{
 		// SetActorTickEnabled(false);
 	}
+	
+	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+	{
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true, false);
+	}
+	else
+	{
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true, false);
+	}
 }
 
 void ASizeChangeMachine::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
@@ -148,19 +190,22 @@ void ASizeChangeMachine::Custom_Tick_Implementation(const float& DeltaTime, cons
 		return;
 	}
 	
+	const FTransform BaseTransform = Machine_SK_Component->GetComponentTransform();
+	
 	if (GrabComponent->IsBeingHeld())
 	{
 		UHeistMotionControllerComponent* ControllerRef = GrabComponent->GetCurrentMotionControllerHoldingThis();
-		const FTransform GrabTransform = GrabComponent->GetComponentTransform();
-		FTransform ControllerTransformRelativeToGrabComp = ControllerRef->GhostHandRef->GetComponentTransform().GetRelativeTransform(GrabTransform);
+		const FTransform LeftHandStartTransformWorld = LeftHandStartTransform * BaseTransform;
+		FTransform ControllerTransformRelativeToGrabComp = ControllerRef->GetComponentTransform().GetRelativeTransform(LeftHandStartTransformWorld);
 		
-		LeftSplineNormalizeProgress = FMath::Clamp((ControllerTransformRelativeToGrabComp.GetTranslation().Y - GrabTransform.GetTranslation().Y) / Max_Y_Distance_FromGrabComps, 0.0f, 1.0f);
-		LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(LeftSplineNormalizeProgress, ESplineCoordinateSpace::World, true);
+		LeftSplineNormalizeProgress = FMath::Clamp((ControllerTransformRelativeToGrabComp.GetTranslation().Y - LeftHandStartTransform.GetTranslation().Y) / Max_Y_Distance_FromGrabComps, 0.0f, 1.0f);
+		const FTransform SplinePointTransform = LeftHandMovementSplineComponent->GetTransformAtTime(RightSplineNormalizeProgress, ESplineCoordinateSpace::World, true);
+		LeftHandFinalLocation = SplinePointTransform.GetTranslation();
 		
 		bIsLeftHandReady = FMath::IsNearlyEqual(LeftSplineNormalizeProgress, 1.0f);
 		
 		ControllerTransformRelativeToGrabComp.SetTranslation(LeftHandFinalLocation + GrabOffset);
-		ControllerTransformRelativeToGrabComp.SetRotation(FQuat::MakeFromEuler(GrabOffsetRotation));
+		ControllerTransformRelativeToGrabComp.SetRotation(SplinePointTransform.GetRotation() + FQuat::MakeFromEuler(GrabOffsetRotation));
 		
 		ControllerRef->PhysicsHandRef->SetWorldTransform(ControllerTransformRelativeToGrabComp);
 		
@@ -168,17 +213,18 @@ void ASizeChangeMachine::Custom_Tick_Implementation(const float& DeltaTime, cons
 	
 	if (SecondGrabComponent->IsBeingHeld())
 	{
-		const FTransform GrabTransform = SecondGrabComponent->GetComponentTransform();
+		const FTransform RightHandStartTransformWorld = RightHandStartTransform * BaseTransform;
 		UHeistMotionControllerComponent* ControllerRef = SecondGrabComponent->GetCurrentMotionControllerHoldingThis();
-		FTransform ControllerTransformRelativeToGrabComp = ControllerRef->GhostHandRef->GetComponentTransform().GetRelativeTransform(GrabTransform);
+		FTransform ControllerTransformRelativeToGrabComp = ControllerRef->GetComponentTransform().GetRelativeTransform(RightHandStartTransformWorld);
 		
-		RightSplineNormalizeProgress = FMath::Clamp((ControllerTransformRelativeToGrabComp.GetTranslation().X - GrabTransform.GetTranslation().X) / Max_Y_Distance_FromGrabComps, 0.0f, 1.0f);
-		RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(RightSplineNormalizeProgress, ESplineCoordinateSpace::World, true);
+		RightSplineNormalizeProgress = FMath::Clamp((ControllerTransformRelativeToGrabComp.GetTranslation().Y - RightHandStartTransform.GetTranslation().Y) / Max_Y_Distance_FromGrabComps, 0.0f, 1.0f);
+		const FTransform SplinePointTransform = RightHandMovementSplineComponent->GetTransformAtTime(RightSplineNormalizeProgress, ESplineCoordinateSpace::World, true);
+		RightHandFinalLocation = SplinePointTransform.GetTranslation();
 		
 		bIsRightHandReady = FMath::IsNearlyEqual(RightSplineNormalizeProgress, 1.0f);
 		
 		ControllerTransformRelativeToGrabComp.SetTranslation(RightHandFinalLocation + GrabOffset);
-		ControllerTransformRelativeToGrabComp.SetRotation(FQuat::MakeFromEuler(GrabOffsetRotation));
+		ControllerTransformRelativeToGrabComp.SetRotation(SplinePointTransform.GetRotation() + FQuat::MakeFromEuler(GrabOffsetRotation));
 		
 		ControllerRef->PhysicsHandRef->SetWorldTransform(ControllerTransformRelativeToGrabComp);
 	}
@@ -201,6 +247,14 @@ void ASizeChangeMachine::Interact_Implementation()
 	SetActorTickEnabled(false);
 	
 	ChangePlayerSize();
+}
+
+void ASizeChangeMachine::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	RightHandStartTransform = SecondGrabComponent->GetRelativeTransform();
+	LeftHandStartTransform = GrabComponent->GetRelativeTransform();
 }
 
 void ASizeChangeMachine::Tick(float DeltaTime)

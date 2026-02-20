@@ -52,6 +52,9 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Pistol | Equip")
 		bool bIsRightHandEquipped;
+		
+	UFUNCTION(BlueprintCallable, Category="Pistol | Equip")
+		void InitializePistol(USkeletalMeshComponent* HandToAttachTo, const bool bIsRightHand);
 	
 protected:
 	virtual void BeginPlay() override;

@@ -103,11 +103,11 @@ void AHeistRemoteDetonator::OnHandleGrabbed(UHeistGrabComponent* GrabComponentRe
 		SetActorTickEnabled(true);
 		if (GrabComponentRef->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
 		{
-			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false);
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false, false);
 		}
 		else
 		{
-			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false);
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false, false);
 		}
 		
 		const float DotForwardHand = MotionControllerRef->GhostHandRef->GetRightVector().Dot(HandleGrabComponent->GetForwardVector());
@@ -128,9 +128,9 @@ void AHeistRemoteDetonator::OnHandleReleased(UHeistGrabComponent* GrabComponentR
 		HandleGrabComponent->CurrentMotionControllerHoldingThis = nullptr;
 		
 		if (GrabComponentRef->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
-			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true);
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true, false);
 		else
-			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
+			IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true, false);
 		
 	}
 

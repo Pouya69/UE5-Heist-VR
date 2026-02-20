@@ -5,6 +5,7 @@
 #include "HeistInteractionInterface.generated.h"
 
 
+enum class EHeistSize : uint8;
 enum class EHeistGrabHandState : uint8;
 class UHeistGrabComponent;
 
@@ -74,4 +75,10 @@ public:
 	// Amount is Normalize (0 <-> 1)
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void SetAmount(const float NewAmount);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		EHeistSize GetCurrentSizeOfGameObject();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void SetNewSizeTo(EHeistSize NewSize);
 };

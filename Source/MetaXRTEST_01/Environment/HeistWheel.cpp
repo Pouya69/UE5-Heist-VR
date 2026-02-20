@@ -269,9 +269,9 @@ void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 	GrabComponent->SetComponentTickEnabled(true);
 	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false);
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false, false);
 	else
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false);
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false, false);
 }
 
 void AHeistWheel::OnWheelReleased(UHeistGrabComponent* ReleasedComponent,
@@ -285,14 +285,14 @@ void AHeistWheel::OnWheelReleased(UHeistGrabComponent* ReleasedComponent,
 	}
 	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true);
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true, false);
 	else
-		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true);
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true, false);
 }
 
 bool AHeistWheel::IsGrabbable_Implementation(const FName BoneHit) const
 {
-	return true;
+	return bIsGrabbableActive;
 }
 
 void AHeistWheel::PostInitializeComponents()

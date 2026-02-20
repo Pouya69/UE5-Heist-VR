@@ -34,6 +34,9 @@ class METAXRTEST_01_API UHeistGrabComponent : public USceneComponent
 
 public:
 	UHeistGrabComponent();
+	
+	UFUNCTION(BlueprintCallable, Category="Grab Component")
+		virtual void SetGrabbableVisible(const bool bIsGrabbableVisible);
 
 protected:
 	

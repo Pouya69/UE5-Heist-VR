@@ -8,6 +8,7 @@
 #include "Grabbable.generated.h"
 
 
+enum class EGrabTypeBase : uint8;
 class UHeistMotionControllerComponent;
 class UHeistGrabComponent;
 
@@ -26,8 +27,30 @@ public:
 	AGrabbable();
 	
 	FTimerHandle RemoteGrabTimerHandle;
-
+		
+	UPROPERTY(BlueprintReadOnly, Category = "Size")
+		bool bIsGrabbableActive;
+	
+	UFUNCTION(BlueprintCallable, Category = "Components")
+		virtual UPrimitiveComponent* GetMainPrimitiveComponent() const;
+		
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Size")
+		EHeistSize CurrentSize;
+	
+	UFUNCTION(BlueprintCallable, Category = "Grab")
+		virtual EGrabTypeBase GetGrabType() const;
+	
+	FVector StartingScale;
+	
 protected:
+	UFUNCTION()
+		virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize);
+	
+	UFUNCTION(BlueprintCallable, Category = "Size")
+		void ToggleActivateGrabbable(const bool bActive);	
+	
+	
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
 	
@@ -46,6 +69,11 @@ protected:
 	virtual bool GetGrabComponents_Implementation(TArray<UHeistGrabComponent*>& OutGrabComponents) override;
 	
 	virtual EHeistGrabHandState GetHandAnimationType_Implementation() const override;
+	
+	
+	
+	virtual EHeistSize GetCurrentSizeOfGameObject_Implementation() override;
+	virtual void SetNewSizeTo_Implementation(EHeistSize NewSize) override;
 	
 	UFUNCTION()
 		void OnReleased_Default(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);

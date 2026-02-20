@@ -48,6 +48,8 @@ AHeistBullet::AHeistBullet()
 	TargetTimeDilationDuration = 4.0f;
 	
 	DestroyBulletAfterSecondsAutomatically = 8.0f;
+	
+	InitialLifeSpan = 10.0f;
 }
 
 void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const float BulletTargetTimeDilation)

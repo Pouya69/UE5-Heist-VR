@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "HeistPlayerInterface.generated.h"
 
+enum class EHeistEquipmentType : uint8;
+struct FPlayerChangeSizeInfo;
 enum class EHeistSize : uint8;
 
 UINTERFACE()
@@ -29,13 +31,19 @@ public:
 		bool GetProceduralFingersAnimData();
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
-		void SetupBonePhysicsAndWeightLeftHand_CPP(FName RootBoneName, bool bSimulate);
+		void SetupBonePhysicsAndWeightLeftHand_CPP(FName RootBoneName, bool bSimulate, const bool bAlsoAttachDetach = false);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
-		void SetupBonePhysicsAndWeightRightHand_CPP(FName RootBoneName, bool bSimulate);
+		void SetupBonePhysicsAndWeightRightHand_CPP(FName RootBoneName, bool bSimulate, const bool bAlsoAttachDetach = false);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
-		bool ChangeSize(EHeistSize PlayerSize);
+		void SetupBothHandsBonePhysicsAndWeightRightHand_CPP(bool bSimulate, const bool bAlsoAttachDetach = false);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		bool ChangeSize(EHeistSize PlayerSize, const FVector NewLocation);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void PossessOtherPlayer(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewCameraLocation, const FRotator& NewCameraRotation, const EHeistEquipmentType EquipmentInHand);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void PistolEquipped();

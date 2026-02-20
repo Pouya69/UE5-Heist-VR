@@ -39,12 +39,26 @@ public:
 	virtual bool IsGrabbable_Implementation(const FName BoneHit) const override;
 	
 	bool IsGrabbableBasedOnBoneHit(const FName BoneHit) const;
+	
+		
+	// Set it explicitly. No Scene Components and Destory.
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Size Change Machine")
+		FVector GetNewPlayerLocationAfterTeleport() const;
+	
+	virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize) override;
 
 protected:
+	
 	virtual void PostInitializeComponents() override;
+	
+	FTransform RightHandStartTransform;
+	FTransform LeftHandStartTransform;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<UHeistGrabComponent> SecondGrabComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		TObjectPtr<USceneComponent> TeleportDestinationSceneComponent;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<USkeletalMeshComponent> Machine_SK_Component;
@@ -93,6 +107,8 @@ protected:
 	// Only if we hit these bones we grab. If empty, it will be grabbable everywhere.
 	UPROPERTY(EditAnywhere, Category="Skeletons")
 		TArray<FName> AcceptableBonesToGrab;
+	
+	virtual void BeginPlay() override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
