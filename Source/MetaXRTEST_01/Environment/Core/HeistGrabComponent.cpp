@@ -278,11 +278,16 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 			break;
 		
 		case EGrabTypeBase::FREE:
+			DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 			if (bSimulateOnDrop)
 			{
 				SetPrimitiveComponentPhysicsEnabled(true);
+				if (CurrentMotionControllerHoldingThis)
+				{
+					// const FName CurrentHand = GetHeldByHand() == EControllerHand::Left ? "hand_l" : "hand_r";
+					// MotionController->PhysicsHandRef->GetPhysicsLinearVelocity(CurrentHand);
+				}
 			}
-			DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 			bIsHeld = false;
 			break;
 		

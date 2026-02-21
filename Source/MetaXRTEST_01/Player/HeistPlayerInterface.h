@@ -43,6 +43,12 @@ public:
 		bool ChangeSize(EHeistSize PlayerSize, const FVector NewLocation);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void LeftForceRelease();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void RightForceRelease();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void PossessOtherPlayer(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewCameraLocation, const FRotator& NewCameraRotation, const EHeistEquipmentType EquipmentInHand);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")

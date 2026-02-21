@@ -8,6 +8,8 @@
 #include "Core/HeistTypes.h"
 #include "Environment/Core/HeistGrabComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/HeistMotionControllerComponent.h"
+#include "Player/HeistPlayerInterface.h"
 
 
 AGrabbable::AGrabbable()
@@ -27,6 +29,8 @@ AGrabbable::AGrabbable()
 	IsRemoteGrabbable = true;
 	
 	CurrentSize = EHeistSize::MEDIUM;
+	
+	bIsGrabbableActive = true;
 }
 
 UPrimitiveComponent* AGrabbable::GetMainPrimitiveComponent() const
@@ -37,6 +41,26 @@ UPrimitiveComponent* AGrabbable::GetMainPrimitiveComponent() const
 EGrabTypeBase AGrabbable::GetGrabType() const
 {
 	return GrabComponent->GrabTypeBase;
+}
+
+void AGrabbable::ForceRelease()
+{
+	if (!GrabComponent->IsBeingHeld()) return;
+	const EControllerHand CurrentHand = GrabComponent->GetHeldByHand();
+
+	switch (CurrentHand)
+	{
+		case EControllerHand::Left:
+			IHeistPlayerInterface::Execute_LeftForceRelease(GrabComponent->CurrentMotionControllerHoldingThis->GetOwner());
+			break;
+		case EControllerHand::Right:
+			IHeistPlayerInterface::Execute_RightForceRelease(GrabComponent->CurrentMotionControllerHoldingThis->GetOwner());
+			break;
+		default:
+			break;
+	}
+	 
+	// GrabComponent->TryRelease(GrabComponent->CurrentMotionControllerHoldingThis, UGameplayStatics::GetPlayerController(GetWorld(), 0), GrabComponent->PhysicsConstraintGrabbingThis);
 }
 
 void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
@@ -51,18 +75,43 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	{
 		MainPrimitiveComp->SetSimulatePhysics(bActive);
 		
-		if (bIsTiny)
-		{
-			MainPrimitiveComp->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
-		}
-	}
+		//if (bIsTiny)
+		//{
+		//	MainPrimitiveComp->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+		//}
 		
+		MainPrimitiveComp->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+		
+		FVector NewObjectVelocity = MainPrimitiveComp->GetComponentVelocity();
+		FVector NewObjectAngularVelocity = MainPrimitiveComp->GetPhysicsAngularVelocityInRadians();
 	
-	ToggleActivateGrabbable(bActive);
+		switch (NewPlayerSize)
+		{
+			default:
+				break;
+				
+			case EHeistSize::TINY:
+				NewObjectAngularVelocity *= 1000.0f;
+				NewObjectVelocity *= 1000.0f;
+				break;
+			
+			case EHeistSize::MEDIUM:
+				NewObjectAngularVelocity *= 0.001f;
+				NewObjectVelocity *= 0.001f;
+				break;
+		}
+		
+		MainPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+		MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(NewObjectAngularVelocity);
+	}
+	
+	
+
 	
 	switch (NewPlayerSize)
 	{
 		case EHeistSize::MEDIUM:
+		
 			if (bIsTiny)
 			{
 				// Disappear tiny stuff.
@@ -83,6 +132,8 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 			SetActorLocation(GetActorLocation() * MEDIUM_SIZE_MULT, false, nullptr, ETeleportType::TeleportPhysics);
 			break;
 	}
+	
+	ToggleActivateGrabbable(bActive);
 }
 
 void AGrabbable::ToggleActivateGrabbable(const bool bActive)
@@ -144,6 +195,7 @@ EHeistSize AGrabbable::GetCurrentSizeOfGameObject_Implementation()
 void AGrabbable::SetNewSizeTo_Implementation(EHeistSize NewSize)
 {
 	CurrentSize = NewSize;
+	StartingScale *= UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize);
 }
 
 void AGrabbable::OnReleased_Default(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef)
@@ -163,11 +215,13 @@ void AGrabbable::PostInitializeComponents()
 		if (CurrentSize == EHeistSize::TINY)
 		{
 			GrabComponent->SetGrabbableVisible(false);
+			GrabComponent->SetPrimitiveComponentPhysicsEnabled(false);
 		}
 		
 		GrabComponent->OnReleased.AddDynamic(this, &AGrabbable::OnReleased_Default);
 		AHeistGameMode* GM = Cast<AHeistGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		GM->OnPlayerChangeSize.AddDynamic(this, &AGrabbable::OnPlayerChangeSize);
+		
 		
 		StartingScale = GetActorScale3D();
 	}

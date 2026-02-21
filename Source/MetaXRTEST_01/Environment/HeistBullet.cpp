@@ -49,7 +49,7 @@ AHeistBullet::AHeistBullet()
 	
 	DestroyBulletAfterSecondsAutomatically = 8.0f;
 	
-	InitialLifeSpan = 10.0f;
+	// InitialLifeSpan = 10.0f;
 }
 
 void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const float BulletTargetTimeDilation)

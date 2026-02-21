@@ -104,6 +104,8 @@ protected:
 	
 	virtual void Interact_Implementation() override;
 	
+	virtual bool GetGrabComponents_Implementation(TArray<UHeistGrabComponent*>& OutGrabComponents) override;
+	
 	// Only if we hit these bones we grab. If empty, it will be grabbable everywhere.
 	UPROPERTY(EditAnywhere, Category="Skeletons")
 		TArray<FName> AcceptableBonesToGrab;

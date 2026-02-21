@@ -42,12 +42,15 @@ public:
 	
 	FVector StartingScale;
 	
-protected:
-	UFUNCTION()
-		virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize);
+	UFUNCTION(BlueprintCallable, Category = "Grab")
+		virtual void ForceRelease();
 	
 	UFUNCTION(BlueprintCallable, Category = "Size")
 		void ToggleActivateGrabbable(const bool bActive);	
+	
+protected:
+	UFUNCTION()
+		virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize);
 	
 	
 	

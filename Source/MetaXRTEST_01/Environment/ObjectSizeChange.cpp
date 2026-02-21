@@ -32,13 +32,29 @@ AObjectSizeChange::AObjectSizeChange()
 	SpitOutDirectionComponent = CreateDefaultSubobject<USceneComponent>("SpitOutDirectionComp");
 	SpitOutDirectionComponent->SetupAttachment(BaseMeshComponent);
 	
+	AdditionToSpitTransform = 200.0f;
+	
+	MinForceOnSpitOut = 60.0f;
+	MaxForceOnSpitOut = 100.0f;
 }
 
 void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 {
+	if (CurrentSize == GrabbableToSpitOut->CurrentSize)
+	{
+		return;
+	}
+	
+	GrabbableToSpitOut->ForceRelease();
+	
 	UPrimitiveComponent* ObjectPrimitiveComp = GrabbableToSpitOut->GetMainPrimitiveComponent();
 	float NewObjectVelocityLength = ObjectPrimitiveComp->GetComponentVelocity().Length();
 	FVector NewObjectAngularVelocity = ObjectPrimitiveComp->GetPhysicsAngularVelocityInRadians();
+	
+	const FVector Direction = UKismetMathLibrary::GetUpVector(SpitOutTransform.Rotator());
+	FVector LocationAddition = Direction;
+	
+	const float Multiplier = UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize);
 	
 	switch (CurrentSize)
 	{
@@ -46,40 +62,64 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 			break;
 			
 		case EHeistSize::TINY:
-			NewObjectAngularVelocity *= 1000.0f;
-			NewObjectVelocityLength *= 1000.0f;
+			NewObjectAngularVelocity *= Multiplier;
+			NewObjectVelocityLength *= Multiplier;
+			LocationAddition *= AdditionToSpitTransform / 1000;
 			break;
 		
 		case EHeistSize::MEDIUM:
-			NewObjectAngularVelocity *= 0.001f;
-			NewObjectVelocityLength *= 0.001f;
+			NewObjectAngularVelocity *= Multiplier;
+			NewObjectVelocityLength *= Multiplier;
+			LocationAddition *= AdditionToSpitTransform;
 			break;
 	}
 	
 	UHeistFunctionLibrary::ChangeSizeTo(GrabbableToSpitOut, CurrentSize, FVector::ZeroVector, FRotator::ZeroRotator);
-	GrabbableToSpitOut->SetActorLocationAndRotation(SpitOutTransform.GetTranslation(), ObjectPrimitiveComp->GetComponentRotation());
 	
-	ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(NewObjectAngularVelocity);
+	GrabbableToSpitOut->ToggleActivateGrabbable(false);
 	
-	FVector NewObjectVelocity = NewObjectVelocityLength * UKismetMathLibrary::GetUpVector(SpitOutTransform.Rotator());
-	if (NewObjectVelocityLength <= 20.0f)
+	// ObjectPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+	
+	GrabbableToSpitOut->SetActorLocationAndRotation(SpitOutTransform.GetTranslation() + LocationAddition, GrabbableToSpitOut->GetActorRotation(), false, nullptr, ETeleportType::TeleportPhysics);
+	if (CurrentSize == EHeistSize::TINY)
 	{
-		NewObjectVelocity += NewObjectVelocity.GetSafeNormal() * 5000.0f;
+		ObjectPrimitiveComp->SetSimulatePhysics(false);
+		ObjectPrimitiveComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		ObjectPrimitiveComp->SetVisibility(false);
 	}
 	
-	ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+	if (ObjectPrimitiveComp->IsSimulatingPhysics())
+	{
+		NewObjectVelocityLength = FMath::Clamp(NewObjectVelocityLength, MinForceOnSpitOut * Multiplier, MaxForceOnSpitOut * Multiplier);
+	
+		const FVector NewObjectVelocity = NewObjectVelocityLength * Direction;
+		
+		ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+		
+	}
 }
 
 void AObjectSizeChange::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 {
 	const bool bActive = NewPlayerSize == CurrentSize;
 	if (CurrentSize == EHeistSize::TINY)
+	{
+		BaseMeshComponent->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 		BaseMeshComponent->SetVisibility(bActive, true);
-	BaseMeshComponent->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+	}
 	ObjectOverlapSphereComponent->SetGenerateOverlapEvents(bActive);
 	
 	const float Multiplier = UHeistFunctionLibrary::GetSizeMultiplierBasedOnType_CHANGE(NewPlayerSize);
 	SpitOutTransform.SetTranslationAndScale3D(SpitOutTransform.GetTranslation() * Multiplier, SpitOutTransform.GetScale3D() * Multiplier);
+	
+	/*
+	if (bActive)
+	{
+		FVector NewObjectVelocity = Multiplier * 500.0f * UKismetMathLibrary::GetUpVector(SpitOutTransform.Rotator());
+		
+	}
+	*/
 }
 
 void AObjectSizeChange::PostInitializeComponents()
