@@ -39,6 +39,8 @@ AHeistLever::AHeistLever()
 	bIsLeverInteractable = true;
 	
 	HandLocationOffset_FromLeverForward = 100.0f;
+	
+	bCanChangeSize = false;
 }
 
 void AHeistLever::PostInitializeComponents()
@@ -49,12 +51,31 @@ void AHeistLever::PostInitializeComponents()
 	{
 		GrabComponent->OnGrabbed.AddDynamic(this, &AHeistLever::OnLeverGrabbed);
 		GrabComponent->OnReleased.AddDynamic(this, &AHeistLever::OnLeverReleased);
+		
+		const bool bActive = CurrentSize == EHeistSize::MEDIUM;
+		if (!LinkedActor)
+		{
+			BaseMeshComponent->SetSimulatePhysics(bActive);
+		}
+		BaseMeshComponent->SetVisibility(bActive, true);
 	}
 }
 
 float AHeistLever::GetProgressNormalized() const
 {
-	return (LeverHandleMeshComponent->GetComponentTransform().GetRotation().Rotator().Pitch - InitialOffRotationPitch) / (TargetFullRotationPitch - InitialOffRotationPitch);
+	return (LeverHandleMeshComponent->GetRelativeTransform().Rotator().Pitch - InitialOffRotationPitch) / (TargetFullRotationPitch - InitialOffRotationPitch);
+}
+
+void AHeistLever::OnPlayerChangeSize(EHeistSize NewPlayerSize)
+{
+	Super::OnPlayerChangeSize(NewPlayerSize);
+	
+	const bool bActive = CurrentSize == NewPlayerSize;
+	if (!LinkedActor)
+	{
+		BaseMeshComponent->SetSimulatePhysics(bActive);
+	}
+	BaseMeshComponent->SetVisibility(bActive, true);
 }
 
 bool AHeistLever::GetIsInteractable_Implementation() const
@@ -150,6 +171,8 @@ void AHeistLever::Tick(float DeltaTime)
 	
 	const float ProgressNormalized = GetProgressNormalized();
 	
+	UE_LOG(LogTemp, Log, TEXT("%f"), ProgressNormalized);
+	
 	switch (LeverInteractionType)
 	{
 		case EHeistObjectInteractionType::CONTINUOUS_ONLY:
@@ -206,7 +229,7 @@ void AHeistLever::Tick(float DeltaTime)
 	{
 		if (bShouldGoBackToInitialPositionWhenNotHeld)
 		{
-			const float CurrentRotationRoll = FMath::FInterpConstantTo(LeverHandleMeshComponent->GetComponentTransform().GetRotation().Rotator().Pitch, InitialOffRotationPitch, DeltaTime, ProgressResetSpeed);
+			const float CurrentRotationRoll = FMath::FInterpConstantTo(LeverHandleMeshComponent->GetRelativeTransform().Rotator().Pitch, InitialOffRotationPitch, DeltaTime, ProgressResetSpeed);
 			LeverHandleMeshComponent->SetRelativeRotation(FRotator(CurrentRotationRoll, 0.0f, 0.0f), true);
 		}
 		return;

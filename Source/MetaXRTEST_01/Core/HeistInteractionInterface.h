@@ -24,6 +24,10 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
     	void Interact();
 	
+	// For for example when Lever is at starting point.
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void Interact_Reset();
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void CannotInteract();
 	
@@ -32,6 +36,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void OnCoolDown();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		USceneComponent* GetAnchorSceneComponentForWheel();
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		bool GetGrabComponents(TArray<UHeistGrabComponent*>& OutGrabComponents);

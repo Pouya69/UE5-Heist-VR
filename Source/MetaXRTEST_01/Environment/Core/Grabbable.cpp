@@ -31,6 +31,8 @@ AGrabbable::AGrabbable()
 	CurrentSize = EHeistSize::MEDIUM;
 	
 	bIsGrabbableActive = true;
+	
+	bCanChangeSize = true;
 }
 
 UPrimitiveComponent* AGrabbable::GetMainPrimitiveComponent() const
@@ -101,8 +103,18 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 				break;
 		}
 		
-		MainPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
-		MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(NewObjectAngularVelocity);
+		MainPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+		
+		/*
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindLambda([&, MainPrimitiveComp]()
+		{
+			MainPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+			MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(NewObjectAngularVelocity);
+		});
+		GetWorldTimerManager().SetTimerForNextTick(TimerDelegate);
+		*/
 	}
 	
 	
@@ -117,8 +129,11 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 				// Disappear tiny stuff.
 				GrabComponent->SetGrabbableVisible(false);
 			}
-			SetActorScale3D(StartingScale);
-			SetActorLocation(GetActorLocation() * 0.001, false, nullptr, ETeleportType::TeleportPhysics);
+			if (!bIsConnectedToAnotherActor)
+			{
+				SetActorScale3D(StartingScale);
+				SetActorLocation(GetActorLocation() * 0.001, false, nullptr, ETeleportType::TeleportPhysics);
+			}
 			break;
 		
 		case EHeistSize::TINY:
@@ -128,8 +143,11 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 				GrabComponent->SetGrabbableVisible(true);
 			}
 			// For now, everything would be visible in Grabbable
-			SetActorScale3D(StartingScale * 1000.0f);
-			SetActorLocation(GetActorLocation() * MEDIUM_SIZE_MULT, false, nullptr, ETeleportType::TeleportPhysics);
+			if (!bIsConnectedToAnotherActor)
+			{
+				SetActorScale3D(StartingScale * 1000.0f);
+				SetActorLocation(GetActorLocation() * MEDIUM_SIZE_MULT, false, nullptr, ETeleportType::TeleportPhysics);
+			}
 			break;
 	}
 	

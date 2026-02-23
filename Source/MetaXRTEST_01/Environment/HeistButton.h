@@ -30,6 +30,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 		TObjectPtr<USphereComponent> TriggerSphereOverlapComponent;
 		
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Size")
+		EHeistSize CurrentSize;
+	
+	UFUNCTION()
+		void OnPlayerChangeSize(EHeistSize NewPlayerSize);
 	
 	virtual void Interact_Implementation() override;
 	

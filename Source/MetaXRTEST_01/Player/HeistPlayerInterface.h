@@ -49,6 +49,12 @@ public:
 		void RightForceRelease();
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void RightForceGrab();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void LeftForceGrab();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void PossessOtherPlayer(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewCameraLocation, const FRotator& NewCameraRotation, const EHeistEquipmentType EquipmentInHand);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")

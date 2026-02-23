@@ -3,6 +3,7 @@
 
 #include "HeistWheel.h"
 
+#include "Core/DetachableGrabComponent.h"
 #include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -23,17 +24,20 @@ AHeistWheel::AHeistWheel()
 	TargetFullRotationRoll = 500.0f;
 	InitialOffRotationRoll = 0.0f;
 	
-	BaseMeshComponent->SetCollisionProfileName("WorldDynamic");
+	BaseMeshComponent->SetCollisionProfileName("VR_Grabbable");
+	BaseMeshComponent->ComponentTags.Add("Detachable");
 	BaseMeshComponent->SetSimulatePhysics(false);
 	
 	WheelMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelMeshComp"));
 	WheelMeshComponent->SetupAttachment(BaseMeshComponent);
-	WheelMeshComponent->SetCollisionProfileName("WorldDynamic");
+	WheelMeshComponent->SetCollisionProfileName("VR_Grabbable");
 	
 	HandleMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandleMeshComp"));
 	HandleMeshComponent->SetupAttachment(WheelMeshComponent);
 	HandleMeshComponent->SetCollisionProfileName("VR_Grabbable");
 	
+	GrabComponent->DestroyComponent();
+	GrabComponent = CreateDefaultSubobject<UDetachableGrabComponent>(TEXT("GrabComp"));
 	GrabComponent->SetupAttachment(HandleMeshComponent);
 	GrabComponent->InitializeGrabComponent(HandleMeshComponent, true);
 	GrabComponent->GrabTypeBase = EGrabTypeBase::CUSTOM;
@@ -44,6 +48,13 @@ AHeistWheel::AHeistWheel()
 	HandRotationThresholdToMove = 0.6f;
 	
 	CheckForPlayerEverySecondsForStopTick = 2.0f;
+	
+	bIsHandRotationFixed = false;
+}
+
+void AHeistWheel::ChangeLinkedActor(AActor* NewLinkedActor)
+{
+	LinkedActor = NewLinkedActor;
 }
 
 float AHeistWheel::GetProgressNormalized() const
@@ -66,6 +77,7 @@ void AHeistWheel::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 	
 	UHeistMotionControllerComponent* MotionControllerRef = GrabComponent->GetCurrentMotionControllerHoldingThis();
 	
+	if (!MotionControllerRef) return;
 	const FTransform ControllerTransform = MotionControllerRef->GetComponentTransform();
 	const FTransform BaseTransform = BaseMeshComponent->GetComponentTransform();
 	
@@ -117,14 +129,47 @@ void AHeistWheel::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 	
 	ControllerTransformRelativeToLeverBase = ControllerTransform.GetRelativeTransform(HandleTransform);
 	
-		
-	ControllerTransformRelativeToLeverBase.SetRotation(HandRotationOffset.Quaternion());
+	if (!bIsHandRotationFixed)
+		ControllerTransformRelativeToLeverBase.SetRotation(HandRotationOffset.Quaternion());
 	ControllerTransformRelativeToLeverBase.SetTranslation(HandLocationOffset);
 	
 	ControllerTransformRelativeToLeverBase = ControllerTransformRelativeToLeverBase * HandleTransform;
 	
 	MotionControllerRef->PhysicsHandRef->SetWorldLocationAndRotation(ControllerTransformRelativeToLeverBase.GetTranslation()
-		 , ControllerTransformRelativeToLeverBase.GetRotation(), false, nullptr, ETeleportType::ResetPhysics);
+		 , bIsHandRotationFixed ? HandRotationOffset.Quaternion() : ControllerTransformRelativeToLeverBase.GetRotation(), false, nullptr, ETeleportType::ResetPhysics);
+}
+
+UPrimitiveComponent* AHeistWheel::GetMainPrimitiveComponent() const
+{
+	return BaseMeshComponent;
+	// return Super::GetMainPrimitiveComponent();
+}
+
+void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
+{
+	Super::OnPlayerChangeSize(NewPlayerSize);
+	
+	const bool bActive = CurrentSize == NewPlayerSize;
+	BaseMeshComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	BaseMeshComponent->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+	if (!LinkedActor)
+	{
+		if (bActive)
+		{
+			BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			HandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			WheelMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			BaseMeshComponent->SetSimulatePhysics(true);
+		}
+		else
+		{
+			BaseMeshComponent->SetSimulatePhysics(false);
+			BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			HandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			WheelMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+	BaseMeshComponent->SetVisibility(bActive, true);
 }
 
 void AHeistWheel::Interact_Implementation()
@@ -265,8 +310,12 @@ void AHeistWheel::Tick(float DeltaTime)
 void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 	UHeistMotionControllerComponent* MotionControllerRef)
 {
+	if (BaseMeshComponent->IsSimulatingPhysics()) return;
+	
 	SetActorTickEnabled(true);
 	GrabComponent->SetComponentTickEnabled(true);
+	
+	
 	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false, false);
@@ -277,6 +326,8 @@ void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 void AHeistWheel::OnWheelReleased(UHeistGrabComponent* ReleasedComponent,
 	UHeistMotionControllerComponent* MotionControllerRef)
 {
+	if (BaseMeshComponent->IsSimulatingPhysics()) return;
+	
 	if (!bShouldGoBackToInitialPositionWhenNotHeld)
 	{
 		// Because it will never go back to initial, we will just disable tick here instead.
@@ -301,10 +352,49 @@ void AHeistWheel::PostInitializeComponents()
 	
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
+		const bool bIsTiny = CurrentSize == EHeistSize::TINY;
+		if (!LinkedActor)
+		{
+			GrabComponent->PrimitiveComponent = BaseMeshComponent;
+			GrabComponent->AttachToComponent(BaseMeshComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			
+			if (!bIsTiny)
+			{
+				BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				BaseMeshComponent->SetSimulatePhysics(true);
+			}
+			
+			GrabComponent->GrabTypeBase = EGrabTypeBase::FREE;
+			GrabComponent->SetSimulateOnDrop(true);
+		}
+		
+		if (bIsTiny)
+		{
+			BaseMeshComponent->SetVisibility(false, true);
+			BaseMeshComponent->SetSimulatePhysics(false);
+			BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 		
 		GrabComponent->OnGrabbed.AddDynamic(this, &AHeistWheel::OnWheelGrabbed);
 		GrabComponent->OnReleased.AddDynamic(this, &AHeistWheel::OnWheelReleased);
 		// WheelMeshComponent->OnComponentHit.AddDynamic(this, &AHeistWheel::OnWheelTouchedOrHit);
+		
+		StartingScale = GetActorScale3D();
 	}
 }
 
+void AHeistWheel::AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo)
+{
+	ForceRelease();
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindLambda([&, NewAnchorToAttachTo]()
+	{
+		HandleMeshComponent->SetSimulatePhysics(false);
+		BaseMeshComponent->SetSimulatePhysics(false);
+		WheelMeshComponent->SetSimulatePhysics(false);
+		IsRemoteGrabbable = false;
+		CastChecked<UDetachableGrabComponent>(GrabComponent)->AttachToAnchorPoint(this, NewAnchorToAttachTo, GrabComponent->CurrentMotionControllerHoldingThis);
+	});
+	GetWorldTimerManager().SetTimerForNextTick(TimerDelegate);
+
+}

@@ -37,14 +37,17 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		virtual void SetGrabbableVisible(const bool bIsGrabbableVisible);
+	
+	// HAS TO BE SET USING: InitializeGrabComponent()
+	UPROPERTY(BlueprintReadOnly, Category="Grab Component | OtherComponents")
+		TObjectPtr<UPrimitiveComponent> PrimitiveComponent;
 
 protected:
 	
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-	// HAS TO BE SET USING: InitializeGrabComponent()
-	UPROPERTY(BlueprintReadOnly, Category="Grab Component | OtherComponents")
-		TObjectPtr<UPrimitiveComponent> PrimitiveComponent;
+
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
 		bool bSimulateOnDrop;
@@ -147,5 +150,5 @@ public:
 		float HandDetachmentDistanceThreshold;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		bool DetachWhenTooFarFromGrabbable();
+		virtual bool DetachWhenTooFarFromGrabbable();
 };

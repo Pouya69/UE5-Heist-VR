@@ -4,6 +4,9 @@
 #include "HeistButton.h"
 
 #include "Components/SphereComponent.h"
+#include "Core/HeistGameMode.h"
+#include "Core/HeistTypes.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -37,16 +40,25 @@ void AHeistButton::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
+	if (GetWorld() && GetWorld()->IsGameWorld())
+	{
+		AHeistGameMode* GM = Cast<AHeistGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		GM->OnPlayerChangeSize.AddDynamic(this, &AHeistButton::OnPlayerChangeSize);
+		
+		OnPlayerChangeSize(EHeistSize::MEDIUM);
+		
+		TriggerSphereOverlapComponent->IgnoreComponentWhenMoving(ButtonBaseMeshComponent, true);
+		TriggerSphereOverlapComponent->IgnoreComponentWhenMoving(ButtonMovingMeshComponent, true);
+		ButtonMovingMeshComponent->IgnoreComponentWhenMoving(TriggerSphereOverlapComponent, true);
+		ButtonBaseMeshComponent->IgnoreComponentWhenMoving(TriggerSphereOverlapComponent, true);
+		ButtonBaseMeshComponent->IgnoreComponentWhenMoving(ButtonMovingMeshComponent, true);
+		ButtonMovingMeshComponent->IgnoreComponentWhenMoving(ButtonBaseMeshComponent, true);
 	
-	TriggerSphereOverlapComponent->IgnoreComponentWhenMoving(ButtonBaseMeshComponent, true);
-	TriggerSphereOverlapComponent->IgnoreComponentWhenMoving(ButtonMovingMeshComponent, true);
-	ButtonMovingMeshComponent->IgnoreComponentWhenMoving(TriggerSphereOverlapComponent, true);
-	ButtonBaseMeshComponent->IgnoreComponentWhenMoving(TriggerSphereOverlapComponent, true);
-	ButtonBaseMeshComponent->IgnoreComponentWhenMoving(ButtonMovingMeshComponent, true);
-	ButtonMovingMeshComponent->IgnoreComponentWhenMoving(ButtonBaseMeshComponent, true);
+		TriggerSphereOverlapComponent->OnComponentBeginOverlap.AddDynamic(this, &AHeistButton::OnTriggerOverlap);
+		TriggerSphereOverlapComponent->OnComponentEndOverlap.AddDynamic(this, &AHeistButton::OnTriggerEndOverlap);
+	}
 	
-	TriggerSphereOverlapComponent->OnComponentBeginOverlap.AddDynamic(this, &AHeistButton::OnTriggerOverlap);
-	TriggerSphereOverlapComponent->OnComponentEndOverlap.AddDynamic(this, &AHeistButton::OnTriggerEndOverlap);
+	
 }
 
 // Called when the game starts or when spawned
@@ -55,6 +67,16 @@ void AHeistButton::BeginPlay()
 	Super::BeginPlay();
 	
 	StartingButtonPosition = ButtonMovingMeshComponent->GetRelativeLocation().Z;
+}
+
+void AHeistButton::OnPlayerChangeSize(EHeistSize NewPlayerSize)
+{
+	if (CurrentSize == EHeistSize::TINY)
+	{
+		const bool bActive = NewPlayerSize == CurrentSize;
+		ButtonBaseMeshComponent->SetVisibility(bActive, true);
+		TriggerSphereOverlapComponent->SetGenerateOverlapEvents(bActive);
+	}
 }
 
 void AHeistButton::Interact_Implementation()
@@ -67,7 +89,12 @@ void AHeistButton::OnTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AA
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (bIsButtonActive) return;
-
+	
+	if (OtherActor->Implements<UHeistInteractionInterface>())
+	{
+		if (IHeistInteractionInterface::Execute_GetCurrentSizeOfGameObject(OtherActor) != CurrentSize) return;
+	}
+	
 	// if (OtherComp->GetPhysicsLinearVelocity().Length() <= ButtonActivationForceThreshold) return;
 	
 	SetActorTickEnabled(true);

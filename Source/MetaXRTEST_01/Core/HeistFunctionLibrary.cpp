@@ -74,12 +74,12 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 		// Timer based to go back to normal.
 		
 		FTimerDelegate Delegate;
-		Delegate.BindLambda([ObjectWorld, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount]()
+		Delegate.BindLambda([ObjectPrimComp, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount]()
 		{
 			ObjectToAffect->CustomTimeDilation = 1.0f;
 			
 			const float NewDilation = 1 / DilationAmount;
-			if (ObjectBodyInstance)
+			if (ObjectPrimComp && ObjectPrimComp->IsSimulatingPhysics())
 			{
 				ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * NewDilation, false);
 				ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * NewDilation, false);

@@ -19,6 +19,13 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Linked Object")
 		TObjectPtr<AActor> LinkedActor;
 	
+	UFUNCTION(BlueprintCallable, Category="Linked Object")
+		void AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo);
+	
+	// For when it is attached to a new point etc.
+	UFUNCTION(BlueprintCallable, Category="Linked Object")
+		void ChangeLinkedActor(AActor* NewLinkedActor);
+	
 	// 0 is not turned at all, 1 is full turned. (InitialOffRotationRoll -> TargetFullRotationRoll)
 	UFUNCTION(BlueprintCallable, Category="Progress")
 		float GetProgressNormalized() const;
@@ -42,6 +49,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Progress")
 		void WheelAtStartingPoint();
 	
+	virtual UPrimitiveComponent* GetMainPrimitiveComponent() const override;
+	
+	virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize) override;
+	
 	virtual void Interact_Implementation() override;
 	
 	virtual bool GetIsInteractable_Implementation() const override;
@@ -57,7 +68,13 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		float ProgressResetSpeed;
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+		TObjectPtr<UStaticMeshComponent> HandleMeshComponent;
+		
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+		TObjectPtr<UStaticMeshComponent> WheelMeshComponent;
+	
 protected:
 	// Will trigger a timer based on this time. For stopping ticking.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress | Tick")
@@ -79,18 +96,17 @@ protected:
 	
 	UFUNCTION()
 		void OnWheelTouchedOrHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-		TObjectPtr<UStaticMeshComponent> WheelMeshComponent;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-		TObjectPtr<UStaticMeshComponent> HandleMeshComponent;
+
 	
 	UPROPERTY(EditAnywhere, Category="Hand Config")
 		FVector HandLocationOffset;
 	
 	UPROPERTY(EditAnywhere, Category="Hand Config")
 		FRotator HandRotationOffset;
+				
+	// If true, hand will be always at the rotation offset and NOT relative to wheel and rotate with the wheel.
+	UPROPERTY(EditAnywhere, Category="Hand Config")
+        bool bIsHandRotationFixed;
 	
 	UFUNCTION()
 		void OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);

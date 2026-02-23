@@ -40,7 +40,8 @@ void UHeistGrabComponent::InitializeGrabComponent(UPrimitiveComponent* InPrimiti
 	{
 		// If child classes override what GrabComponent gets attached to, we clear whatever we set previous.
 		PrimitiveComponent->SetSimulatePhysics(false);
-		PrimitiveComponent->SetCollisionProfileName("PhysicsActor");
+		if (PrimitiveComponent->GetCollisionProfileName() != "VR_Grabbable_TwoHanded")
+			PrimitiveComponent->SetCollisionProfileName("PhysicsActor");
 	}
 	
 	PrimitiveComponent = InPrimitiveComp;
@@ -50,7 +51,8 @@ void UHeistGrabComponent::InitializeGrabComponent(UPrimitiveComponent* InPrimiti
 	PrimitiveComponent->SetCanEverAffectNavigation(false);
 	PrimitiveComponent->SetSimulatePhysics(true);
 	SetSimulateOnDrop(true);
-	PrimitiveComponent->SetCollisionProfileName("VR_Grabbable");
+	if (PrimitiveComponent->GetCollisionProfileName() != "VR_Grabbable_TwoHanded")
+		PrimitiveComponent->SetCollisionProfileName("VR_Grabbable");
 }
 
 void UHeistGrabComponent::AttachHandToGrabComponent(bool bAttach,
@@ -221,14 +223,17 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 			{
 				// One hand is already grabbing this. We grab it with the second hand.
 				PhysicsConstraintGrabbingThis_02 = HandPhysicsConstraint;
-				// PhysicsConstraintGrabbingThis->BreakConstraint();
-				// PhysicsConstraintGrabbingThis->UpdateConstraintFrames();
-				PhysicsConstraintGrabbingThis->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(CurrentMotionControllerHoldingThis->PhysicsHandRef), GetHeldByHand(CurrentMotionControllerHoldingThis) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
-				PhysicsConstraintGrabbingThis_02->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
-				PhysicsConstraintGrabbingThis_02->UpdateConstraintFrames();
-				PhysicsConstraintGrabbingThis->UpdateConstraintFrames();
+				PhysicsConstraintGrabbingThis->BreakConstraint();
 				
-				// PrimitiveComponent->SetWorldTransform(TransformBeforeAttachment, true, nullptr, ETeleportType::TeleportPhysics);
+				FTimerDelegate TimerDelegate;
+				TimerDelegate.BindLambda([&, HandPhysicsConstraint, AttachTo, MotionController]()
+				{
+					PhysicsConstraintGrabbingThis->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(CurrentMotionControllerHoldingThis->PhysicsHandRef), GetHeldByHand(CurrentMotionControllerHoldingThis) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
+					PhysicsConstraintGrabbingThis_02->SetConstrainedComponents(CastChecked<USkeletalMeshComponent>(AttachTo), GetHeldByHand(MotionController) == EControllerHand::Left ? "hand_l" : "hand_r", PrimitiveComponent, NAME_None);
+				});
+				
+				GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+				
 				bIsHeld_02 = true;
 			}
 			else
@@ -284,8 +289,8 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 				SetPrimitiveComponentPhysicsEnabled(true);
 				if (CurrentMotionControllerHoldingThis)
 				{
-					// const FName CurrentHand = GetHeldByHand() == EControllerHand::Left ? "hand_l" : "hand_r";
-					// MotionController->PhysicsHandRef->GetPhysicsLinearVelocity(CurrentHand);
+					const FName CurrentHand = GetHeldByHand() == EControllerHand::Left ? "hand_l" : "hand_r";
+					PrimitiveComponent->SetPhysicsLinearVelocity(MotionController->PhysicsHandRef->GetPhysicsLinearVelocity(CurrentHand));
 				}
 			}
 			bIsHeld = false;

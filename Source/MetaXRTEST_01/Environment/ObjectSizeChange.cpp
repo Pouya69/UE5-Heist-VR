@@ -2,6 +2,7 @@
 
 #include "ObjectSizeChange.h"
 
+#include "HeistWheel.h"
 #include "Components/SphereComponent.h"
 #include "Core/HeistFunctionLibrary.h"
 #include "Core/HeistGameMode.h"
@@ -44,6 +45,11 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 	{
 		return;
 	}
+	FVector NewScale = GrabbableToSpitOut->GetActorScale3D() * UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize);
+	
+
+	
+	IHeistInteractionInterface::Execute_SetNewSizeTo(GrabbableToSpitOut, CurrentSize);
 	
 	GrabbableToSpitOut->ForceRelease();
 	
@@ -74,20 +80,31 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 			break;
 	}
 	
-	UHeistFunctionLibrary::ChangeSizeTo(GrabbableToSpitOut, CurrentSize, FVector::ZeroVector, FRotator::ZeroRotator);
+	
+
+	UE_LOG(LogTemp, Log, TEXT("%s"), *NewScale.ToString());
+	// UHeistFunctionLibrary::ChangeSizeTo(GrabbableToSpitOut, CurrentSize, FVector::ZeroVector, FRotator::ZeroRotator);
 	
 	GrabbableToSpitOut->ToggleActivateGrabbable(false);
 	
 	// ObjectPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
-	ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+
 	
-	GrabbableToSpitOut->SetActorLocationAndRotation(SpitOutTransform.GetTranslation() + LocationAddition, GrabbableToSpitOut->GetActorRotation(), false, nullptr, ETeleportType::TeleportPhysics);
+	GrabbableToSpitOut->SetActorLocationAndRotation(SpitOutTransform.GetTranslation() + LocationAddition, FRotator::ZeroRotator, false, nullptr, ETeleportType::TeleportPhysics);
 	if (CurrentSize == EHeistSize::TINY)
 	{
 		ObjectPrimitiveComp->SetSimulatePhysics(false);
 		ObjectPrimitiveComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		ObjectPrimitiveComp->SetVisibility(false);
+		ObjectPrimitiveComp->SetVisibility(false, true);
 	}
+	else if (CurrentSize == EHeistSize::MEDIUM)
+	{
+		ObjectPrimitiveComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		ObjectPrimitiveComp->SetSimulatePhysics(true);
+		ObjectPrimitiveComp->SetVisibility(true, true);
+	}
+	
+	GrabbableToSpitOut->SetActorScale3D(NewScale);
 	
 	if (ObjectPrimitiveComp->IsSimulatingPhysics())
 	{
@@ -95,23 +112,68 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 	
 		const FVector NewObjectVelocity = NewObjectVelocityLength * Direction;
 		
-		ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+		if (AHeistWheel* Wheel = Cast<AHeistWheel>(GrabbableToSpitOut))
+		{
+			if (CurrentSize == EHeistSize::MEDIUM)
+			{
+				GrabbableToSpitOut->SetActorLocationAndRotation(SpitOutTransform.GetTranslation() + (LocationAddition * 10.0f), FRotator::ZeroRotator, false, nullptr, ETeleportType::TeleportPhysics);
+				
+				FTimerDelegate Delegate;
+				Delegate.BindLambda([&, GrabbableToSpitOut, ObjectPrimitiveComp, NewObjectVelocity, LocationAddition]()
+				{
+					ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity / 10000.0f);
+					ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+				});
+				GetWorldTimerManager().SetTimerForNextTick(Delegate);
+			}
 		
+		}
+		else
+		{
+			ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+			ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+		}
+		
+		// ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+		// ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 	}
+	
+	/*
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&, GrabbableToSpitOut, LocationAddition]()
+	{
+		GrabbableToSpitOut->TeleportTo(SpitOutTransform.GetTranslation() + LocationAddition, FRotator::ZeroRotatorw);
+	});
+	*/
 }
 
 void AObjectSizeChange::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 {
 	const bool bActive = NewPlayerSize == CurrentSize;
+	
 	if (CurrentSize == EHeistSize::TINY)
 	{
 		BaseMeshComponent->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 		BaseMeshComponent->SetVisibility(bActive, true);
 	}
-	ObjectOverlapSphereComponent->SetGenerateOverlapEvents(bActive);
+	else
+	{
+		BaseMeshComponent->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+	}
+	
+	ObjectOverlapSphereComponent->SetGenerateOverlapEvents(false);
+	FTimerHandle TimerHandle;
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&, bActive]()
+	{
+		ObjectOverlapSphereComponent->SetGenerateOverlapEvents(bActive);
+		RecentPrimitiveComponent = nullptr;
+	});
+	GetWorldTimerManager().SetTimer(TimerHandle, Delegate, 0.2f, false);
 	
 	const float Multiplier = UHeistFunctionLibrary::GetSizeMultiplierBasedOnType_CHANGE(NewPlayerSize);
 	SpitOutTransform.SetTranslationAndScale3D(SpitOutTransform.GetTranslation() * Multiplier, SpitOutTransform.GetScale3D() * Multiplier);
+	
 	
 	/*
 	if (bActive)
@@ -144,14 +206,26 @@ void AObjectSizeChange::PostInitializeComponents()
 void AObjectSizeChange::OnObjectEnteredVaccum(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AGrabbable* GrabbableEnteredVaccum = Cast<AGrabbable>(OtherActor);
-	if (!GrabbableEnteredVaccum || GrabbableEnteredVaccum->GetGrabType() == EGrabTypeBase::TWO_HANDED || !GrabbableEnteredVaccum->IsRemoteGrabbable || GrabbableEnteredVaccum->CurrentSize == OtherObjectSizeChangerSide->CurrentSize) return;
-	UPrimitiveComponent* ObjectPrimitiveComp = GrabbableEnteredVaccum->GetMainPrimitiveComponent();
+	if (RecentPrimitiveComponent && OtherComp == RecentPrimitiveComponent) return;
+	AGrabbable* RecentGrabbable = Cast<AGrabbable>(OtherActor);
+	
+	ObjectOverlapSphereComponent->SetGenerateOverlapEvents(false);
+	FTimerHandle TimerHandle;
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&]()
+	{
+		ObjectOverlapSphereComponent->SetGenerateOverlapEvents(true);
+	});
+	GetWorldTimerManager().SetTimer(TimerHandle, Delegate, 0.2f, false);
+	
+	if (!RecentGrabbable || RecentGrabbable->GetGrabType() == EGrabTypeBase::TWO_HANDED || !RecentGrabbable->bCanChangeSize || RecentGrabbable->CurrentSize == OtherObjectSizeChangerSide->CurrentSize) return;
+	UPrimitiveComponent* ObjectPrimitiveComp = RecentGrabbable->GetMainPrimitiveComponent();
 	if (ObjectPrimitiveComp->GetComponentVelocity().GetSafeNormal().Dot(UKismetMathLibrary::GetUpVector(SpitOutTransform.Rotator())) >= 0.97f)
 	{
 		// Is exiting not entering.
 		return;
 	}
 	
-	OtherObjectSizeChangerSide->SpitOutObject(GrabbableEnteredVaccum);
+	
+	OtherObjectSizeChangerSide->SpitOutObject(RecentGrabbable);
 }

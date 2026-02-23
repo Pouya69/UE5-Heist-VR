@@ -21,8 +21,15 @@ public:
 	virtual bool IsRemoteGrabbable_Implementation() const override;
 	
 	// Explicit control
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Remote Grab")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Remote Grab")
 		bool IsRemoteGrabbable;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Size")
+		bool bCanChangeSize;
+	
+	// This needs to be true if you don't want to scale this by itself.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Size")
+		bool bIsConnectedToAnotherActor;
 	
 	AGrabbable();
 	
@@ -48,14 +55,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Size")
 		void ToggleActivateGrabbable(const bool bActive);	
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
+	
 protected:
 	UFUNCTION()
 		virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize);
-	
-	
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<UHeistGrabComponent> GrabComponent;

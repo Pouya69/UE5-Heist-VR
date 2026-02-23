@@ -38,7 +38,7 @@ public:
 protected:
 	FTimerHandle DestroyTimerHandle;
 	
-	UPROPERTY(BlueprintReadOnly, Category="Bullet | Pooling")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Bullet | Pooling")
 		float DestroyBulletAfterSecondsAutomatically;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Bullet | Pooling")

@@ -41,6 +41,8 @@ public:
 	
 	bool bIsLeverInteractable;
 	
+	virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize) override;
+	
 protected:
 	virtual bool GetIsInteractable_Implementation() const override;
 	virtual void SetIsInteractable_Implementation(const bool bIsInteractable) override;

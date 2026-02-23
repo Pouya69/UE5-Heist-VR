@@ -58,6 +58,18 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSi
 	InHeistPistol->InitializePistol(RightPhysicsHandRef, true);
 	TogglePistolEnabled(false);
 	
+	/*
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&]()
+	{
+		TogglePistolEnabled(false);
+	});
+	
+	FTimerHandle TimerHandle;
+	
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, Delegate, 1.0f, false);
+	*/
+	
 	RightMotionControllerRef = InRightMotionControllerRef;
 	LeftGhostHandRef = InLeftGhostHandRef;
 	LeftPhysicsHandRef = InLeftPhysicsHandRef;

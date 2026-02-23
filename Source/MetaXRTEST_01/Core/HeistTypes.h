@@ -1,8 +1,10 @@
 ﻿#pragma once
 
-#define GRAB_CHANNEL ECC_GameTraceChannel2
 #define VR_WIDGET_CHANNEL ECC_GameTraceChannel1
+#define GRAB_CHANNEL ECC_GameTraceChannel2
 #define BULLET_CHANNEL ECC_GameTraceChannel3
+#define EQUIPMENT_CHANNEL ECC_GameTraceChannel4
+#define ALWAYS_COLLIDING_PHYSICS_ACTOR_CHANNEL ECC_GameTraceChannel5
 
 
 

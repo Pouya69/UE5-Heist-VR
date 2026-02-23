@@ -4,8 +4,8 @@
 #include "SizeChangeMachine.h"
 
 #include "Components/SplineComponent.h"
+#include "Core/DetachableGrabComponent.h"
 #include "Core/HeistFunctionLibrary.h"
-#include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/HeistMotionControllerComponent.h"
@@ -18,6 +18,8 @@ ASizeChangeMachine::ASizeChangeMachine()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = false;
+	
+	bCanChangeSize = false;
 	
 	Machine_SK_Component = CreateDefaultSubobject<USkeletalMeshComponent>("Machine_SK_Comp");
 	SetRootComponent(Machine_SK_Component);
@@ -107,6 +109,10 @@ void ASizeChangeMachine::PostInitializeComponents()
 			LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 			RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 		}
+		
+		const bool bActive = CurrentSize != EHeistSize::TINY;
+		// Machine_SK_Component->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+		Machine_SK_Component->SetVisibility(bActive, true);
 	}	
 	
 }
