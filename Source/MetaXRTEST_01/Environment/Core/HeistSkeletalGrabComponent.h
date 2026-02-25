@@ -28,7 +28,7 @@ public:
 		TArray<FName> AcceptableBonesToGrab;
 	
 protected:
-	virtual bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr) override;
+	virtual bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr, const FVector& SnapGrabLocationOffset = FVector::ZeroVector) override;
 	
 	virtual bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr) override;
 };

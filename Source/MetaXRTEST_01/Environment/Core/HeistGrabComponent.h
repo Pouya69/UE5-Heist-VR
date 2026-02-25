@@ -77,10 +77,10 @@ protected:
 	
 public:
 	UPROPERTY(BlueprintReadWrite, Category="Grab Component")
-		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis;
+		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis_L;
 	
 	UPROPERTY(BlueprintReadWrite, Category="Grab Component | Two Handed")
-		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis_02;
+		UPhysicsConstraintComponent* PhysicsConstraintGrabbingThis_R;
 	
 	UPROPERTY(BlueprintReadWrite, Category="Grab Component | OtherComponents")
 		TObjectPtr<UHeistMotionControllerComponent> CurrentMotionControllerHoldingThis;
@@ -114,7 +114,7 @@ public:
 		bool IsReadyToGrab() const;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		virtual bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
+		virtual bool TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr, const FVector& SnapGrabLocationOffset = FVector::ZeroVector);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		virtual bool TryRelease(UHeistMotionControllerComponent* MotionController, APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint = nullptr);
@@ -137,7 +137,7 @@ public:
 		EGrabTypeBase GrabTypeBase;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
-		void SnapTo(USceneComponent* AttachTo, FVector LocationOffset = FVector::ZeroVector, FRotator RotationOffset = FRotator::ZeroRotator);
+		void SnapTo(USceneComponent* AttachTo, FVector LocationOffset = FVector::ZeroVector, FRotator RotationOffset = FRotator::ZeroRotator, const bool bIsRightHand = false);
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")
 		EControllerHand GetHeldByHand(UHeistMotionControllerComponent* InMotionController = nullptr) const;

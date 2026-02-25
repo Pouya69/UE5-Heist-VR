@@ -37,6 +37,67 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 	bCanRemoteGrab_R = false;
 	bCanRemoteGrab_L = false;
 	
+	GrabInterpToRealHandsSpeed = 100.0f;
+}
+
+void UHeistPlayerMainComponent::StartLockHands(const bool bIsRightHand, const FVector& HandLockLocation)
+{
+	if (bIsRightHand)
+	{
+		RightGrabHandLockLocation = HandLockLocation;
+	}
+	else
+	{
+		LeftGrabHandLockLocation = HandLockLocation;
+	}
+	
+	/*
+	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", false, false);
+	else
+		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false, false);
+	*/
+	
+	LockHands_Tick(0.01f, bIsRightHand);
+}
+
+void UHeistPlayerMainComponent::StopLockHands(const bool bIsRightHand)
+{
+	
+}
+
+void UHeistPlayerMainComponent::LockHands_Tick(const float& DeltaTime, const bool bIsRightHand)
+{
+	if (bIsRightHand)
+	{
+		const FTransform ObjectTransform = RightMotionControllerRef->CurrentGrabbedComp->GetPrimitiveComponentAttached()->GetComponentTransform();
+		const FTransform ControllerTransform = RightMotionControllerRef->GetComponentTransform();
+		FTransform ControllerTransformRelativeToHoldingObject = ControllerTransform.GetRelativeTransform(ObjectTransform);
+		
+		ControllerTransformRelativeToHoldingObject.SetTranslation(RightGrabHandLockLocation);
+		
+		ControllerTransformRelativeToHoldingObject = ControllerTransformRelativeToHoldingObject * ObjectTransform;
+		
+		const FVector FinalLockLocation = FMath::VInterpTo(ControllerTransformRelativeToHoldingObject.GetTranslation(), ControllerTransform.GetTranslation(), DeltaTime, GrabInterpToRealHandsSpeed);
+		
+		RightPhysicsHandRef->SetWorldLocation(FinalLockLocation,
+			false, nullptr, ETeleportType::TeleportPhysics);
+	}
+	else
+	{
+		const FTransform ObjectTransform = LeftMotionControllerRef->CurrentGrabbedComp->GetPrimitiveComponentAttached()->GetComponentTransform();
+		const FTransform ControllerTransform = LeftMotionControllerRef->GetComponentTransform();
+		FTransform ControllerTransformRelativeToHoldingObject = ControllerTransform.GetRelativeTransform(ObjectTransform);
+		
+		ControllerTransformRelativeToHoldingObject.SetTranslation(LeftGrabHandLockLocation);
+		
+		ControllerTransformRelativeToHoldingObject = ControllerTransformRelativeToHoldingObject * ObjectTransform;
+		
+		const FVector FinalLockLocation = FMath::VInterpTo(ControllerTransformRelativeToHoldingObject.GetTranslation(), ControllerTransform.GetTranslation(), DeltaTime, GrabInterpToRealHandsSpeed);
+		
+		LeftPhysicsHandRef->SetWorldLocation(FinalLockLocation,
+			false, nullptr, ETeleportType::TeleportPhysics);
+	}
 }
 
 void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSize, const float InPlayerRadius, const float InPlayerCapsuleHalfHeight, USkeletalMeshComponent* InRightGhostHandRef,
@@ -100,7 +161,11 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 		bCanRemoteGrab_R = true;
 	}
 	
-	if (!bCanRemoteGrab_R) return;
+	if (!bCanRemoteGrab_R)
+	{
+		RightHandPreviousLocation = RightHandLocation;
+		return;
+	}
 	
 	const bool bDidRightHit = GetWorld()->SweepSingleByChannel(RightHitResult, RightHandLocation, RightEndLocation, FQuat::Identity, GRAB_CHANNEL, CollisionShape, Params);
 	
@@ -164,7 +229,11 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 		bCanRemoteGrab_L = true;
 	}
 	
-	if (!bCanRemoteGrab_L) return;
+	if (!bCanRemoteGrab_L)
+	{
+		LeftHandPreviousLocation = LeftHandLocation;
+		return;
+	}
 	
 	const bool bDidLeftHit = GetWorld()->SweepSingleByChannel(LeftHitResult, LeftHandLocation, LeftEndLocation, FQuat::Identity, GRAB_CHANNEL, CollisionShape, Params);
 	
@@ -210,16 +279,32 @@ void UHeistPlayerMainComponent::RemoteGrabLeft()
 void UHeistPlayerMainComponent::CustomGrab_Tick(const float& DeltaTime)
 {
 	
-	if (LeftMotionControllerRef->CurrentGrabbedComp && LeftMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM)
+	if (LeftMotionControllerRef->CurrentGrabbedComp)
 	{
-		// Left grabbed custom Tick logic.
-		IHeistInteractionInterface::Execute_Custom_Tick(LeftMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, LeftMotionControllerRef->CurrentGrabbedComp);
+		if (LeftMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM || LeftMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::WEIGHTED_ONE_HANDED)
+		{
+			// Left grabbed custom Tick logic.
+			IHeistInteractionInterface::Execute_Custom_Tick(LeftMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, LeftMotionControllerRef->CurrentGrabbedComp);
+		}
+		else
+		{
+			// Lock Left Hand for Grabbing object.
+			// LockHands_Tick(DeltaTime, false);
+		}
 	}
 	
-	if (RightMotionControllerRef->CurrentGrabbedComp && RightMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM)
+	if (RightMotionControllerRef->CurrentGrabbedComp)
 	{
-		// Right grabbed custom Tick logic.
-		IHeistInteractionInterface::Execute_Custom_Tick(RightMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, RightMotionControllerRef->CurrentGrabbedComp);
+		if (RightMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::CUSTOM || RightMotionControllerRef->CurrentGrabbedComp->GrabTypeBase == EGrabTypeBase::WEIGHTED_ONE_HANDED)
+		{
+			// Right grabbed custom Tick logic.
+			IHeistInteractionInterface::Execute_Custom_Tick(RightMotionControllerRef->CurrentGrabbedComp->GetOwner(), DeltaTime, RightMotionControllerRef->CurrentGrabbedComp);
+		}
+		else
+		{
+			// Lock Right Hand for Grabbing object.
+			// LockHands_Tick(DeltaTime, true);
+		}
 	}
 }
 
@@ -234,8 +319,9 @@ void UHeistPlayerMainComponent::TogglePistolEnabled(const bool bEnabled)
 {
 	if (bEnabled)
 	{
-		PistolAttachedToHand->GetPistolSkeletalMeshComponent()->SetSimulatePhysics(false);
+		PistolAttachedToHand->GetPistolSkeletalMeshComponent()->SetAllBodiesSimulatePhysics(false);
 		PistolAttachedToHand->AttachToComponent(RightPhysicsHandRef, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "weapon_r_socket");
+		
 	}
 	else
 	{

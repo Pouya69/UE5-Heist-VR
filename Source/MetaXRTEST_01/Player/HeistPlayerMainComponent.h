@@ -83,6 +83,24 @@ protected:
 	float PlayerCapsuleHalfHeight;
 
 public:
+	UFUNCTION(BlueprintCallable, Category="Procedural Grab")
+		void StartLockHands(const bool bIsRightHand, const FVector& HandLockLocation);
+	
+	UFUNCTION(BlueprintCallable, Category="Procedural Grab")
+		void StopLockHands(const bool bIsRightHand);
+	
+	void LockHands_Tick(const float& DeltaTime, const bool bIsRightHand);
+	
+	UPROPERTY(BlueprintReadOnly, Category="Procedural Grab")
+		FVector LeftGrabHandLockLocation;
+	
+	// For interpolating TO the controller from the locked location.
+	UPROPERTY(EditDefaultsOnly, Category="Procedural Grab")
+		float GrabInterpToRealHandsSpeed;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Procedural Grab")
+		FVector RightGrabHandLockLocation;
+	
 	UPROPERTY(BlueprintReadWrite, Category="Size")
 		EHeistSize CurrentSize;
 	

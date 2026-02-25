@@ -24,9 +24,9 @@ bool UHeistSkeletalGrabComponent::IsGrabbableBasedOnBoneHit(const FName BoneHit)
 }
 
 bool UHeistSkeletalGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionController, USceneComponent* AttachTo,
-                                          APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint)
+                                          APlayerController* PlayerController, UPhysicsConstraintComponent* HandPhysicsConstraint, const FVector& SnapGrabLocationOffse)
 {
-	return Super::TryGrab(MotionController, AttachTo, PlayerController, HandPhysicsConstraint);
+	return Super::TryGrab(MotionController, AttachTo, PlayerController, HandPhysicsConstraint, SnapGrabLocationOffse);
 }
 
 bool UHeistSkeletalGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionController,
