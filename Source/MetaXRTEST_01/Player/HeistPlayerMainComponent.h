@@ -7,6 +7,7 @@
 #include "HeistPlayerMainComponent.generated.h"
 
 
+enum class EHeistEquipmentType : uint8;
 class UPhysicsConstraintComponent;
 enum class EHeistSize : uint8;
 class AHeistPistol;
@@ -83,6 +84,9 @@ protected:
 	float PlayerCapsuleHalfHeight;
 
 public:
+	UPROPERTY(BlueprintReadWrite, Category="Equipment")
+		EHeistEquipmentType CurrentEquippedEquipment;	
+	
 	UFUNCTION(BlueprintCallable, Category="Procedural Grab")
 		void StartLockHands(const bool bIsRightHand, const FVector& HandLockLocation);
 	
@@ -110,11 +114,17 @@ public:
 	UPROPERTY()
 		UPhysicsConstraintComponent* LeftHandPhysicsConstraint;
 	
+	UPROPERTY()
+		UPhysicsConstraintComponent* RightHandGrabPhysicsConstraint;
+	
+	UPROPERTY()
+		UPhysicsConstraintComponent* LeftHandGrabPhysicsConstraint;
+	
 	UFUNCTION(BlueprintCallable)
 	void InitializePlayerComponent(EHeistSize InCurrentSize, const float InPlayerRadius, const float InPlayerCapsuleHalfHeight, USkeletalMeshComponent* InRightGhostHandRef, USkeletalMeshComponent* InRightPhysicsHandRef,
 		USkeletalMeshComponent* InLeftGhostHandRef, USkeletalMeshComponent* InLeftPhysicsHandRef, UPhysicsConstraintComponent* InRightHandPhysicsConstraint, UPhysicsConstraintComponent* InLeftHandPhysicsConstraint,
 		UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
-		UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol);
+		UPhysicsConstraintComponent* InRightHandGrabPhysicsConstraint, UPhysicsConstraintComponent* InLeftHandGrabPhysicsConstraint, UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol);
 	
 	UFUNCTION(BlueprintCallable, Category="Remote Grab")
 		void RemoteGrabRight();

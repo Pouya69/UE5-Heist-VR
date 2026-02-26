@@ -22,7 +22,7 @@ public:
 	
 	// Explicit control
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Remote Grab")
-		bool IsRemoteGrabbable;
+		bool bIsRemoteGrabbable;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Size")
 		bool bCanChangeSize;

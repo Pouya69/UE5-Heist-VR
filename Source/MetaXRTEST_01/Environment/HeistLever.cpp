@@ -34,7 +34,7 @@ AHeistLever::AHeistLever()
 	
 	LeverInteractionType = EHeistObjectInteractionType::TRIGGER_ON_INTERACTION_ONLY;
 	
-	IsRemoteGrabbable = false;
+	bIsRemoteGrabbable = false;
 	
 	bIsLeverInteractable = true;
 	

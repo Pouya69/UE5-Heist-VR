@@ -46,13 +46,17 @@ void AHeistPistol::TogglePistolEnabled(const bool bEnabled)
 	if (bEnabled)
 	{
 		PistolMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+		PistolMeshComponent->SetAllBodiesSimulatePhysics(false);
 		// PistolMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);	
 		OnHeistPistolEquipped();
 	}
 	else
 	{
 		OnHeistPistolUnequipped();
+		// PistolMeshComponent->SetAllBodiesBelowSimulatePhysics("Grip", false);
+		PistolMeshComponent->SetAllBodiesSimulatePhysics(false);
 		PistolMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);	
+		
 	}
 }
 

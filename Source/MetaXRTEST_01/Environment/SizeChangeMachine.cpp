@@ -54,7 +54,7 @@ ASizeChangeMachine::ASizeChangeMachine()
 	
 	SplineResetSpeed = 0.6f;
 	
-	IsRemoteGrabbable = false;
+	bIsRemoteGrabbable = false;
 	
 	AcceptableBonesToGrab.Add(TEXT("hand_r"));
 	AcceptableBonesToGrab.Add(TEXT("hand_l"));

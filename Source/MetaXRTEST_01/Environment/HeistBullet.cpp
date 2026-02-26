@@ -56,7 +56,7 @@ void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const flo
 {
 	CustomTimeDilation = 1.0f / UGameplayStatics::GetGlobalTimeDilation(GetWorld());  // Make it move independetly.
 	
-	SetActorTransform(BulletTransform);
+	SetActorTransform(BulletTransform, false, nullptr, ETeleportType::TeleportPhysics);
 	
 	TargetTimeDilation = BulletTargetTimeDilation;
 	bIsActiveBullet = true;
@@ -75,11 +75,12 @@ void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const flo
 	FTimerDelegate Delegate;
 	Delegate.BindLambda([&, BulletTransform]()
 	{
-		BulletProjectileMovementComponent->SetComponentTickEnabled(true);
-		BulletProjectileMovementComponent->Activate();
+		// BulletProjectileMovementComponent->SetComponentTickEnabled(true);
+		BulletProjectileMovementComponent->Activate(true);
 		BulletProjectileMovementComponent->Velocity = UKismetMathLibrary::GetForwardVector(BulletTransform.Rotator()) * BulletProjectileMovementComponent->InitialSpeed;
 		BulletProjectileMovementComponent->UpdateComponentVelocity();
 		BulletProjectileMovementComponent->bSimulationEnabled = true;
+		
 	});
 	GetWorldTimerManager().SetTimerForNextTick(Delegate);
 	
@@ -106,10 +107,11 @@ void AHeistBullet::AddBulletToPool()
 	BulletSphereComponent->SetVisibility(false);
 	
 	BulletProjectileMovementComponent->Deactivate();
-	BulletProjectileMovementComponent->SetComponentTickEnabled(false);
+	// BulletProjectileMovementComponent->SetComponentTickEnabled(false);
 	FHitResult HitResult;
 	BulletProjectileMovementComponent->StopSimulating(HitResult);
 	BulletProjectileMovementComponent->StopMovementImmediately();
+	BulletProjectileMovementComponent->SetUpdatedComponent(GetRootComponent());
 	
 	BulletLoopedAudioComp->Deactivate();
 	BulletLoopedAudioComp->SetComponentTickEnabled(false);

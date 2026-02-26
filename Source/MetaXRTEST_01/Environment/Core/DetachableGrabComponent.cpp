@@ -42,7 +42,7 @@ bool UDetachableGrabComponent::DetachWhenTooFarFromGrabbable()
 	if (AHeistWheel* WheelOwner = Cast<AHeistWheel>(GetOwner()))
 	{
 		WheelOwner->ChangeLinkedActor(nullptr);
-		WheelOwner->IsRemoteGrabbable = true;
+		WheelOwner->bIsRemoteGrabbable = true;
 		WheelOwner->BaseMeshComponent->SetSimulatePhysics(false);
 		
 		

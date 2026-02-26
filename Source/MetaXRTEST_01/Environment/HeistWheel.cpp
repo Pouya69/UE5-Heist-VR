@@ -19,7 +19,7 @@ AHeistWheel::AHeistWheel()
 	
 	bShouldGoBackToInitialPositionWhenNotHeld = true;
 	
-	IsRemoteGrabbable = false;
+	bIsRemoteGrabbable = false;
 	
 	TargetFullRotationRoll = 500.0f;
 	InitialOffRotationRoll = 0.0f;
@@ -392,7 +392,7 @@ void AHeistWheel::AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo)
 		HandleMeshComponent->SetSimulatePhysics(false);
 		BaseMeshComponent->SetSimulatePhysics(false);
 		WheelMeshComponent->SetSimulatePhysics(false);
-		IsRemoteGrabbable = false;
+		bIsRemoteGrabbable = false;
 		CastChecked<UDetachableGrabComponent>(GrabComponent)->AttachToAnchorPoint(this, NewAnchorToAttachTo, GrabComponent->CurrentMotionControllerHoldingThis);
 	});
 	GetWorldTimerManager().SetTimerForNextTick(TimerDelegate);

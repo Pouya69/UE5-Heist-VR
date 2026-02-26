@@ -38,6 +38,8 @@ UHeistPlayerMainComponent::UHeistPlayerMainComponent()
 	bCanRemoteGrab_L = false;
 	
 	GrabInterpToRealHandsSpeed = 100.0f;
+	
+	CurrentEquippedEquipment = EHeistEquipmentType::NONE;
 }
 
 void UHeistPlayerMainComponent::StartLockHands(const bool bIsRightHand, const FVector& HandLockLocation)
@@ -104,6 +106,7 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSi
                                                           USkeletalMeshComponent* InRightPhysicsHandRef, USkeletalMeshComponent* InLeftGhostHandRef,
                                                           USkeletalMeshComponent* InLeftPhysicsHandRef, UPhysicsConstraintComponent* InRightHandPhysicsConstraint, UPhysicsConstraintComponent* InLeftHandPhysicsConstraint,
                                                           UHeistMotionControllerComponent* InLeftMotionControllerRef, UHeistMotionControllerComponent* InRightMotionControllerRef,
+                                                          UPhysicsConstraintComponent* InRightHandGrabPhysicsConstraint, UPhysicsConstraintComponent* InLeftHandGrabPhysicsConstraint,
                                                           UCameraComponent* InCameraComponent, AHeistPistol* InHeistPistol)
 {
 	CurrentSize = InCurrentSize;
@@ -115,9 +118,14 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSi
 	RightHandPhysicsConstraint = InRightHandPhysicsConstraint;
 	LeftHandPhysicsConstraint = InLeftHandPhysicsConstraint;
 	
+	RightHandGrabPhysicsConstraint = InRightHandGrabPhysicsConstraint;
+	LeftHandGrabPhysicsConstraint = InLeftHandGrabPhysicsConstraint;
+	
 	PistolAttachedToHand = InHeistPistol;
 	InHeistPistol->InitializePistol(RightPhysicsHandRef, true);
 	TogglePistolEnabled(false);
+	
+	CurrentEquippedEquipment = EHeistEquipmentType::NONE;
 	
 	/*
 	FTimerDelegate Delegate;
@@ -310,13 +318,14 @@ void UHeistPlayerMainComponent::CustomGrab_Tick(const float& DeltaTime)
 
 void UHeistPlayerMainComponent::Custom_PistolTick(const float& Alpha)
 {
-	if (!PistolAttachedToHand || PistolAttachedToHand->bIsPistolEnabled)
+	if (!PistolAttachedToHand || !PistolAttachedToHand->bIsPistolEnabled)
 		return;
 	PistolAttachedToHand->CustomPistolTick(Alpha);
 }
 
 void UHeistPlayerMainComponent::TogglePistolEnabled(const bool bEnabled)
 {
+	PistolAttachedToHand->GetPistolSkeletalMeshComponent()->SetAllBodiesSimulatePhysics(false);
 	if (bEnabled)
 	{
 		PistolAttachedToHand->GetPistolSkeletalMeshComponent()->SetAllBodiesSimulatePhysics(false);
@@ -327,7 +336,6 @@ void UHeistPlayerMainComponent::TogglePistolEnabled(const bool bEnabled)
 	{
 		PistolAttachedToHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	}
-	
 	PistolAttachedToHand->TogglePistolEnabled(bEnabled);
 }
 
@@ -402,6 +410,7 @@ void UHeistPlayerMainComponent::PlayerChangedSize()
 
 void UHeistPlayerMainComponent::PickedUpPistol()
 {
+	CurrentEquippedEquipment = EHeistEquipmentType::PISTOL;
 	AHeistPlayerState* PlayerState = Cast<AHeistPlayerState>(UGameplayStatics::GetPlayerState(GetWorld(), 0));
 	PlayerState->PickedUpPistol();
 	

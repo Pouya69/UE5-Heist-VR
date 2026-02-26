@@ -66,7 +66,7 @@ ADoor::ADoor()
 	
 	MaxDistanceBetweenPhysicsHandAndMotionController = 30.f;
 	
-	IsRemoteGrabbable = false;
+	bIsRemoteGrabbable = false;
 }
 
 void ADoor::PostInitializeComponents()

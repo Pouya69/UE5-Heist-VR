@@ -221,6 +221,11 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 		
 		case EGrabTypeBase::TWO_HANDED:
 			const bool bIsRightHand = GetHeldByHand(MotionController) == EControllerHand::Right;
+			if (!PrimitiveComponent->IsSimulatingPhysics())
+			{
+				PrimitiveComponent->SetSimulatePhysics(true);
+			}
+		
 			if (bIsRightHand)
 			{
 				// First hand grabbing it.
@@ -343,7 +348,8 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 		
 		case EGrabTypeBase::CUSTOM:
 			bIsHeld = false;
-			SoundLocation = CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation();
+			if (CurrentMotionControllerHoldingThis)
+				SoundLocation = CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation();
 			SetComponentTickEnabled(false);
 			break;
 		
@@ -359,15 +365,19 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 			}
 			if (bIsRightHand)
 			{
-				CurrentMotionControllerHoldingThis->CurrentGrabbedComp = nullptr;
+				if (CurrentMotionControllerHoldingThis)
+				{
+					CurrentMotionControllerHoldingThis->CurrentGrabbedComp = nullptr;
+					SoundLocation = CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation();
+					PlayerController->PlayHapticEffect(OnReleaseHapticEffect, GetHeldByHand(CurrentMotionControllerHoldingThis));
+				}
 				if (PhysicsConstraintGrabbingThis_R)
 				{
-					SoundLocation = CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation();
 					PhysicsConstraintGrabbingThis_R->BreakConstraint();
 					PhysicsConstraintGrabbingThis_R = nullptr;
 				}
 				
-				PlayerController->PlayHapticEffect(OnReleaseHapticEffect, GetHeldByHand(CurrentMotionControllerHoldingThis));
+				
 				CurrentMotionControllerHoldingThis = nullptr;
 				bIsHeld = false;
 			}
@@ -388,6 +398,8 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 			{
 				SetPrimitiveComponentPhysicsEnabled(true);
 				SetComponentTickEnabled(false);
+				if (!bSimulateOnDrop)
+					PrimitiveComponent->SetSimulatePhysics(false);
 			}
 			break;
 	}

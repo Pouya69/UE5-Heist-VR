@@ -26,7 +26,7 @@ AGrabbable::AGrabbable()
 	GrabComponent->InitializeGrabComponent(BaseMeshComponent);
 	GrabComponent->GrabTypeBase = EGrabTypeBase::FREE;
 	
-	IsRemoteGrabbable = true;
+	bIsRemoteGrabbable = true;
 	
 	CurrentSize = EHeistSize::MEDIUM;
 	
@@ -73,7 +73,7 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	
 	UPrimitiveComponent* MainPrimitiveComp = GetMainPrimitiveComponent();
 	
-	if (IsRemoteGrabbable)
+	if (bIsRemoteGrabbable)
 	{
 		MainPrimitiveComp->SetSimulatePhysics(bActive);
 		
@@ -173,7 +173,7 @@ void AGrabbable::SetIsInFocus_Implementation(const bool bIsInFocus)
 
 bool AGrabbable::IsRemoteGrabbable_Implementation() const
 {
-	return bIsGrabbableActive && IsRemoteGrabbable && !GrabComponent->IsBeingHeld() && !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
+	return bIsGrabbableActive && bIsRemoteGrabbable && !GrabComponent->IsBeingHeld() && !GetWorldTimerManager().IsTimerActive(RemoteGrabTimerHandle);
 }
 
 bool AGrabbable::RemoteGrab_Implementation()
