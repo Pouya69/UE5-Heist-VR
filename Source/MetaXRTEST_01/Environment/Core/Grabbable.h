@@ -31,6 +31,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Size")
 		bool bIsConnectedToAnotherActor;
 	
+	virtual void ReleaseConstraintFromAnchor_Implementation(UPhysicsConstraintComponent* ReleasedConstraintComp) override;
+	
 	AGrabbable();
 	
 	FTimerHandle RemoteGrabTimerHandle;

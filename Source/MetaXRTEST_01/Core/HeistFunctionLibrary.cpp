@@ -52,20 +52,27 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 {
 	UWorld* ObjectWorld = ObjectToAffect->GetWorld();
 	ObjectWorld->GetTimerManager().ClearTimer(OutTimeDilationTimerHandle);
+	ObjectWorld->GetTimerManager().ClearAllTimersForObject(ObjectToAffect);
 	
 	// Instant
 	ObjectToAffect->CustomTimeDilation = DilationAmount;
 	
+	APawn* CharacterToAffect = Cast<APawn>(ObjectToAffect);
+	
 	UPrimitiveComponent* ObjectPrimComp = Cast<UPrimitiveComponent>(ObjectToAffect->GetRootComponent());
 	FBodyInstance* ObjectBodyInstance;
-	if (ObjectPrimComp)
+	if (!CharacterToAffect)
 	{
-		ObjectBodyInstance = ObjectPrimComp->GetBodyInstance();
-		ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * DilationAmount, false);
-		ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * DilationAmount, false);
-		ObjectBodyInstance->SetMassScale(ObjectBodyInstance->MassScale * (1 / DilationAmount));
-		ObjectBodyInstance->SetEnableGravity(false);
+		if (ObjectPrimComp)
+		{
+			ObjectBodyInstance = ObjectPrimComp->GetBodyInstance();
+			ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * DilationAmount, false);
+			ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * DilationAmount, false);
+			ObjectBodyInstance->SetMassScale(ObjectBodyInstance->MassScale * (1 / DilationAmount));
+			ObjectBodyInstance->SetEnableGravity(false);
+		}
 	}
+	
 	
 	
 	if (Duration > 0.0f)
@@ -74,12 +81,12 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 		// Timer based to go back to normal.
 		
 		FTimerDelegate Delegate;
-		Delegate.BindLambda([ObjectPrimComp, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount]()
+		Delegate.BindLambda([ObjectPrimComp, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount, CharacterToAffect]()
 		{
 			ObjectToAffect->CustomTimeDilation = 1.0f;
 			
 			const float NewDilation = 1 / DilationAmount;
-			if (ObjectPrimComp && ObjectPrimComp->IsSimulatingPhysics())
+			if (!CharacterToAffect && ObjectPrimComp && ObjectPrimComp->IsSimulatingPhysics())
 			{
 				ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * NewDilation, false);
 				ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * NewDilation, false);

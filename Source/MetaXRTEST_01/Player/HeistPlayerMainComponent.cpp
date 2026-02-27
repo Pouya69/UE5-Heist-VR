@@ -413,6 +413,7 @@ void UHeistPlayerMainComponent::PickedUpPistol()
 	CurrentEquippedEquipment = EHeistEquipmentType::PISTOL;
 	AHeistPlayerState* PlayerState = Cast<AHeistPlayerState>(UGameplayStatics::GetPlayerState(GetWorld(), 0));
 	PlayerState->PickedUpPistol();
-	
 	TogglePistolEnabled(true);
+	
+	IHeistPlayerInterface::Execute_OnPickedUpPistolForFirstTime(GetOwner());
 }

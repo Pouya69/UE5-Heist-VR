@@ -12,6 +12,14 @@
 #include "Player/HeistPlayerInterface.h"
 
 
+void AGrabbable::ReleaseConstraintFromAnchor_Implementation(UPhysicsConstraintComponent* ReleasedConstraintComp)
+{
+	if (!GetMainPrimitiveComponent()->IsSimulatingPhysics())
+	{
+		GetMainPrimitiveComponent()->SetSimulatePhysics(true);
+	}
+}
+
 AGrabbable::AGrabbable()
 {
 	// PrimaryActorTick.bCanEverTick = true;

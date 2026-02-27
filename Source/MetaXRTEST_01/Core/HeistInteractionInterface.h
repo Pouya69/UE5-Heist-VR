@@ -5,6 +5,7 @@
 #include "HeistInteractionInterface.generated.h"
 
 
+class UPhysicsConstraintComponent;
 enum class EHeistSize : uint8;
 enum class EHeistGrabHandState : uint8;
 class UHeistGrabComponent;
@@ -30,6 +31,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void CannotInteract();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void ReleaseConstraintFromAnchor(UPhysicsConstraintComponent* ReleasedConstraintComp);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void SetIsInFocus(const bool bIsInFocus);

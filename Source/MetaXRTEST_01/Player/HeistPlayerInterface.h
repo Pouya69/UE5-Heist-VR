@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "HeistPlayerInterface.generated.h"
 
+class UCameraComponent;
 enum class EHeistEquipmentType : uint8;
 struct FPlayerChangeSizeInfo;
 enum class EHeistSize : uint8;
@@ -68,4 +69,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void PistolTriggerReleased();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Player Interface")
+		void OnPickedUpPistolForFirstTime();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Player Interface")
+		USceneComponent* GetPlayerCameraReferenceSoft() const;
 };

@@ -250,14 +250,27 @@ bool UHeistGrabComponent::TryGrab(UHeistMotionControllerComponent* MotionControl
 			}
 			if (bIsHeld_02 && bIsHeld)
 			{
+				FVector RightHandPosition = FVector::ZeroVector;
+				FVector LeftHandPosition = FVector::ZeroVector;
 				if (PhysicsConstraintGrabbingThis_R)
+				{
 					PhysicsConstraintGrabbingThis_R->BreakConstraint();
+					RightHandPosition = CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation();
+				}
 				if (PhysicsConstraintGrabbingThis_L)
+				{
 					PhysicsConstraintGrabbingThis_L->BreakConstraint();
+					LeftHandPosition = CurrentMotionControllerHoldingThis_02->PhysicsHandRef->GetComponentLocation();
+				}
 				
 				FTimerDelegate TimerDelegate;
-				TimerDelegate.BindLambda([&, HandPhysicsConstraint, AttachTo, MotionController]()
+				
+				TimerDelegate.BindLambda([&, HandPhysicsConstraint, AttachTo, MotionController, RightHandPosition, LeftHandPosition]()
 				{
+					if (!RightHandPosition.IsNearlyZero())
+						CurrentMotionControllerHoldingThis->PhysicsHandRef->SetWorldLocation(RightHandPosition, false, nullptr, ETeleportType::TeleportPhysics);
+					if (!LeftHandPosition.IsNearlyZero())
+						CurrentMotionControllerHoldingThis_02->PhysicsHandRef->SetWorldLocation(LeftHandPosition, false, nullptr, ETeleportType::TeleportPhysics);
 					PhysicsConstraintGrabbingThis_R->SetConstrainedComponents(CurrentMotionControllerHoldingThis->PhysicsHandRef, "hand_r", PrimitiveComponent, NAME_None);
 					PhysicsConstraintGrabbingThis_L->SetConstrainedComponents(CurrentMotionControllerHoldingThis_02->PhysicsHandRef, "hand_l", PrimitiveComponent, NAME_None);
 					PhysicsConstraintGrabbingThis_L->UpdateConstraintFrames();
@@ -341,6 +354,10 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 				PhysicsConstraintGrabbingThis_R = nullptr;
 				SoundLocation = CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation();
 			}
+			if (bSimulateOnDrop)
+			{
+				SetPrimitiveComponentPhysicsEnabled(true);
+			}
 			SetPrimitiveComponentPhysicsEnabled(true);
 			SetComponentTickEnabled(false);
 			bIsHeld = false;
@@ -396,7 +413,7 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 			}
 			if (!CurrentMotionControllerHoldingThis && !CurrentMotionControllerHoldingThis_02)
 			{
-				SetPrimitiveComponentPhysicsEnabled(true);
+				SetPrimitiveComponentPhysicsEnabled(bSimulateOnDrop);
 				SetComponentTickEnabled(false);
 				if (!bSimulateOnDrop)
 					PrimitiveComponent->SetSimulatePhysics(false);
@@ -431,7 +448,7 @@ bool UHeistGrabComponent::TryRelease(UHeistMotionControllerComponent* MotionCont
 
 void UHeistGrabComponent::SetSimulateOnDrop(const bool bSimulate)
 {
-	if (ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
+	if (GetWorld() && GetWorld()->IsGameWorld() && ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
 	{
 		bSimulateOnDrop = bSimulate;
 	}
@@ -439,7 +456,7 @@ void UHeistGrabComponent::SetSimulateOnDrop(const bool bSimulate)
 
 void UHeistGrabComponent::SetPrimitiveComponentPhysicsEnabled(const bool bSimulate)
 {
-	if (ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
+	if (GetWorld() && GetWorld()->IsGameWorld() && ensureMsgf(IsGrabComponentReady(), TEXT("Grab Component is not ready on actor. FIX: Make sure InitializeGrabComponent() is being called.")))
 	{
 		PrimitiveComponent->SetSimulatePhysics(bSimulate);
 	}
@@ -489,7 +506,9 @@ bool UHeistGrabComponent::DetachWhenTooFarFromGrabbable()
 	if (CurrentMotionControllerHoldingThis == nullptr || 
 		FVector::Dist(CurrentMotionControllerHoldingThis->GetComponentLocation(), CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation()) <= HandDetachmentDistanceThreshold) return false;
 	
-	TryRelease(CurrentMotionControllerHoldingThis, UGameplayStatics::GetPlayerController(GetWorld(), 0), PhysicsConstraintGrabbingThis_R);
+	IHeistPlayerInterface::Execute_LeftForceRelease(CurrentMotionControllerHoldingThis->GetOwner());
+	IHeistPlayerInterface::Execute_RightForceRelease(CurrentMotionControllerHoldingThis->GetOwner());
+	// TryRelease(CurrentMotionControllerHoldingThis, UGameplayStatics::GetPlayerController(GetWorld(), 0), PhysicsConstraintGrabbingThis_R);
 	return true;
 }
 

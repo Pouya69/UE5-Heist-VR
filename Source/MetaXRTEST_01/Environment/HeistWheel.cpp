@@ -96,6 +96,7 @@ void AHeistWheel::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 	WheelDirectionTowardsHandle.X = 0.0f;
 	WheelDirectionTowardsHandle.Normalize();
 	
+	
 	// const float DeltaRotation = (DirectionFromWheelToHand - WheelDirectionTowardsHandle).Rotation().Pitch;
 	
 	// DrawDebugLine(GetWorld(), WheelTransform.GetTranslation(), WheelTransform.GetTranslation() + (DirectionFromWheelToHand * 50.0f), FColor::Red, false, 0.1f, 0, 20.0f);
@@ -302,8 +303,6 @@ void AHeistWheel::Tick(float DeltaTime)
 		}
 		return;
 	}
-	
-	
 	
 }
 
