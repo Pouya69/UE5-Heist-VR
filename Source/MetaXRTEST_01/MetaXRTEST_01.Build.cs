@@ -12,7 +12,7 @@ public class MetaXRTEST_01 : ModuleRules
 		
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "HeadMountedDisplay", "Niagara" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "HeadMountedDisplay", "Niagara", "AIModule", "LevelSequence", "MovieScene" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "CourierCharacter.generated.h"
 
+class ACourierController;
+
 UCLASS()
 class METAXRTEST_01_API ACourierCharacter : public ACharacter
 {
@@ -23,17 +25,50 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="References")
 		USceneComponent* CurrentLookingAtTarget;
 	
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="IK | Player")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Interp, Category="IK | Player")
 		float LookAtPlayerAlpha;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Interp, Category="IK | Player")
+		float CutsceneAlpha;
+	
+	UFUNCTION(BlueprintCallable, Category = "IK | Player")
+		void SetCutsceneAlpha(float NewAlpha);
+	
+	UFUNCTION(BlueprintCallable, Category = "IK | Player")
+		void SetLookAtPlayerAlpha(float NewAlpha);
+	
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Controller")
+		TObjectPtr<ACourierController> CourierControllerRef;
 	
 	UFUNCTION(BlueprintCallable, Category = "Focus")
 		void FocusOnPlayer();
 	
 	UFUNCTION(BlueprintCallable, Category = "Focus")
 		void ClearFocus();
-
+	
+	UFUNCTION(BlueprintCallable, Category = "Obstacle")
+		void StartAttackObstacle();
+	
+	UFUNCTION(BlueprintCallable, Category = "Obstacle")
+		void AttackObstacle();
+	
 	
 protected:
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Obstacle")
+		TObjectPtr<UAnimMontage> AttackObstacleMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Obstacle")
+		FName ObstacleAttackForceBone;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Obstacle")
+		float ObstacleCheckRadius;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Obstacle")
+		float ObstaclePushAwayForce;
+	
+	virtual void PostInitializeComponents() override;
+	
 	virtual void BeginPlay() override;
 
 public:
