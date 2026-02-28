@@ -36,6 +36,9 @@ public:
 		void ReleaseConstraintFromAnchor(UPhysicsConstraintComponent* ReleasedConstraintComp);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		UPhysicsConstraintComponent* GetPhysicsConstraintComp();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void SetIsInFocus(const bool bIsInFocus);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")

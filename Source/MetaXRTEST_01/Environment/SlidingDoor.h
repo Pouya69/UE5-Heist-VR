@@ -42,6 +42,16 @@ protected:
 	
 	virtual void ReleaseConstraintFromAnchor_Implementation(UPhysicsConstraintComponent* ReleasedConstraintComp) override;
 	
+	FVector BaseLocationOffsetFromHandle;
+	FVector BaseLocationOffsetFromHandle2;
+	FVector InitialDoorLocation;
+	
+	UPROPERTY(EditInstanceOnly, Category = "Constraints")
+		TObjectPtr<AActor> LinkedConstraintActor;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Constraints")
+		TObjectPtr<UPhysicsConstraintComponent> LinkedConstraintComp;
+	
 	UFUNCTION()
 		void OnHandleGrabbed(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef);
 	

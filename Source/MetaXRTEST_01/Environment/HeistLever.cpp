@@ -171,7 +171,7 @@ void AHeistLever::Tick(float DeltaTime)
 	
 	const float ProgressNormalized = GetProgressNormalized();
 	
-	UE_LOG(LogTemp, Log, TEXT("%f"), ProgressNormalized);
+	// UE_LOG(LogTemp, Log, TEXT("%f"), ProgressNormalized);
 	
 	switch (LeverInteractionType)
 	{

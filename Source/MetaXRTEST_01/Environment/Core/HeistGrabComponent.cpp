@@ -506,8 +506,9 @@ bool UHeistGrabComponent::DetachWhenTooFarFromGrabbable()
 	if (CurrentMotionControllerHoldingThis == nullptr || 
 		FVector::Dist(CurrentMotionControllerHoldingThis->GetComponentLocation(), CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation()) <= HandDetachmentDistanceThreshold) return false;
 	
-	IHeistPlayerInterface::Execute_LeftForceRelease(CurrentMotionControllerHoldingThis->GetOwner());
-	IHeistPlayerInterface::Execute_RightForceRelease(CurrentMotionControllerHoldingThis->GetOwner());
+	AActor* OwnerActor = CurrentMotionControllerHoldingThis->GetOwner();
+	IHeistPlayerInterface::Execute_LeftForceRelease(OwnerActor);
+	IHeistPlayerInterface::Execute_RightForceRelease(OwnerActor);
 	// TryRelease(CurrentMotionControllerHoldingThis, UGameplayStatics::GetPlayerController(GetWorld(), 0), PhysicsConstraintGrabbingThis_R);
 	return true;
 }

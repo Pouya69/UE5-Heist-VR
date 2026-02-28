@@ -4,6 +4,7 @@
 #include "SlidingDoor.h"
 
 #include "Core/HeistGrabComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "Player/HeistMotionControllerComponent.h"
 #include "Player/HeistPlayerInterface.h"
@@ -54,22 +55,40 @@ ASlidingDoor::ASlidingDoor()
 
 void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
+	IHeistInteractionInterface::Execute_Custom_Tick(LinkedConstraintActor, DeltaTime, nullptr);
+	
 	const FTransform ControllerTransform = WhichGrabComponent->CurrentMotionControllerHoldingThis->GetComponentTransform();
 	UPrimitiveComponent* WhichHandle = WhichGrabComponent == GrabComponent ? FirstHandleMeshComponent : SecondHandleMeshComponent;
-	const FTransform HandleTransform = WhichHandle->GetComponentTransform();
+	FTransform HandleTransform = WhichHandle->GetComponentTransform();
 	
 	FTransform ControllerTransformRelativeToHandle = ControllerTransform.GetRelativeTransform(HandleTransform);
 	FVector ControllerLocation = ControllerTransformRelativeToHandle.GetTranslation();
 	ControllerLocation.Y = 0.0f;
+	ControllerLocation.X = 0.0f;
+	if (LinkedConstraintComp && LinkedConstraintComp->ConstraintInstance.IsProjectionEnabled())
+	{
+		ControllerLocation.Z = 0.0f;
+	}
+	
+	ControllerTransformRelativeToHandle.SetTranslation(ControllerLocation);
+	ControllerTransformRelativeToHandle.SetRotation(HandRotationOffset.Quaternion());
+	
+	FTransform NewControllerTransformRelativeToHandle = ControllerTransformRelativeToHandle * HandleTransform;
+	
+	const FVector Offset = WhichGrabComponent == SecondHandleGrabComponent ? BaseLocationOffsetFromHandle2 : BaseLocationOffsetFromHandle;
+	FVector FinalDoorLocation = NewControllerTransformRelativeToHandle.GetTranslation() - Offset;
+	BaseMeshComponent->SetWorldLocation(FinalDoorLocation, true, nullptr, ETeleportType::TeleportPhysics);
+	
+	HandleTransform = WhichHandle->GetComponentTransform();
+	ControllerTransformRelativeToHandle = ControllerTransform.GetRelativeTransform(HandleTransform);
+	ControllerLocation = ControllerTransformRelativeToHandle.GetTranslation();
+	ControllerLocation.Y = 0.0f;
+	ControllerLocation.X = 0.0f;
 	ControllerLocation.Z = 0.0f;
 	
 	ControllerTransformRelativeToHandle.SetTranslation(ControllerLocation + HandLocationOffset);
-	ControllerTransformRelativeToHandle.SetRotation((ControllerTransformRelativeToHandle.Rotator() + HandRotationOffset).Quaternion());
-	
-	FVector ControllerLocationRelative = ControllerTransformRelativeToHandle.GetTranslation();
+	ControllerTransformRelativeToHandle.SetRotation(HandRotationOffset.Quaternion());
 	ControllerTransformRelativeToHandle = ControllerTransformRelativeToHandle * HandleTransform;
-	
-	BaseMeshComponent->AddForce(ControllerLocationRelative / 8.0f, NAME_None);
 	
 	WhichGrabComponent->CurrentMotionControllerHoldingThis->PhysicsHandRef->SetWorldLocationAndRotation(ControllerTransformRelativeToHandle.GetTranslation(), ControllerTransformRelativeToHandle.GetRotation(),
 		false, nullptr, ETeleportType::TeleportPhysics);
@@ -87,7 +106,15 @@ void ASlidingDoor::OnHandleGrabbed(UHeistGrabComponent* GrabbedComponent,
 {
 	GrabbedComponent->SetComponentTickEnabled(true);
 	
+	BaseMeshComponent->SetSimulatePhysics(false);
+	DoorPhysicsConstraint->BreakConstraint();
 	
+	
+	
+	MotionControllerRef->PhysicsHandRef->IgnoreActorWhenMoving(this, true);
+	BaseMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, true);
+	FirstHandleMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, true);
+	SecondHandleMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, true);
 	
 	if (GrabbedComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
 	{
@@ -107,11 +134,28 @@ void ASlidingDoor::OnHandleReleased(UHeistGrabComponent* ReleasedComponent,
 	
 	ReleasedComponent->SetComponentTickEnabled(false);
 	
-	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightLeftHand_CPP(MotionControllerRef->GetOwner(), "hand_l", true, false);
 	else
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", true, false);
+	
+	
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&, MotionControllerRef]()
+	{
+		if (LinkedConstraintComp && !LinkedConstraintComp->ConstraintInstance.IsProjectionEnabled())
+		{
+			BaseMeshComponent->SetSimulatePhysics(true);
+			DoorPhysicsConstraint->SetConstrainedComponents(BaseMeshComponent, NAME_None, nullptr, NAME_None);
+		}
+		
+		MotionControllerRef->PhysicsHandRef->IgnoreActorWhenMoving(this, false);
+		BaseMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, false);
+		FirstHandleMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, false);
+		SecondHandleMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, false);
+	});
+	GetWorldTimerManager().SetTimerForNextTick(Delegate);
+	
 	
 }
 
@@ -132,16 +176,29 @@ void ASlidingDoor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (LinkedConstraintActor && LinkedConstraintActor->Implements<UHeistInteractionInterface>())
+		LinkedConstraintComp = IHeistInteractionInterface::Execute_GetPhysicsConstraintComp(LinkedConstraintActor);
+	
+	InitialDoorLocation = BaseMeshComponent->GetComponentLocation();
+	
+	BaseMeshComponent->SetSimulatePhysics(false);
+	DoorPhysicsConstraint->BreakConstraint();
 }
 
 void ASlidingDoor::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
-	GrabComponent->OnGrabbed.AddDynamic(this, &ASlidingDoor::OnHandleGrabbed);
-	SecondHandleGrabComponent->OnGrabbed.AddDynamic(this, &ASlidingDoor::OnHandleGrabbed);
-	GrabComponent->OnReleased.AddDynamic(this, &ASlidingDoor::OnHandleReleased);
-	SecondHandleGrabComponent->OnReleased.AddDynamic(this, &ASlidingDoor::OnHandleReleased);
+	if (GetWorld() && GetWorld()->IsGameWorld())
+	{
+		GrabComponent->OnGrabbed.AddDynamic(this, &ASlidingDoor::OnHandleGrabbed);
+		SecondHandleGrabComponent->OnGrabbed.AddDynamic(this, &ASlidingDoor::OnHandleGrabbed);
+		GrabComponent->OnReleased.AddDynamic(this, &ASlidingDoor::OnHandleReleased);
+		SecondHandleGrabComponent->OnReleased.AddDynamic(this, &ASlidingDoor::OnHandleReleased);
+		
+		BaseLocationOffsetFromHandle = FirstHandleMeshComponent->GetRelativeLocation();
+		BaseLocationOffsetFromHandle2 = SecondHandleMeshComponent->GetRelativeLocation();
+	}
 }
 
 // Called every frame
