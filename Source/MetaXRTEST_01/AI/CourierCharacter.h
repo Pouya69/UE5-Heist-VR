@@ -7,6 +7,7 @@
 #include "CourierCharacter.generated.h"
 
 class ACourierController;
+class UMotionWarpingComponent;
 
 UCLASS()
 class METAXRTEST_01_API ACourierCharacter : public ACharacter
@@ -54,6 +55,9 @@ public:
 	
 	
 protected:
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+		TObjectPtr<UMotionWarpingComponent> MotionWarpComponent;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Obstacle")
 		TObjectPtr<UAnimMontage> AttackObstacleMontage;

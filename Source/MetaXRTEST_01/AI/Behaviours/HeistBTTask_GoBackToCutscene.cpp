@@ -10,6 +10,7 @@ EBTNodeResult::Type UHeistBTTask_GoBackToCutscene::ExecuteTask(UBehaviorTreeComp
 {
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is Moving To Destination", false);
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is In Cutscene", true);
+	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is Blocked By Obstacle", false);
 	
 	ULevelSequencePlayer* CurrentCutsceneRef = Cast<ULevelSequencePlayer>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("Current Cutscene Player Ref"));
 	OwnerComp.GetBlackboardComponent()->SetValueAsObject("Current Cutscene Player Ref", nullptr);

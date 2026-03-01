@@ -41,6 +41,9 @@ public:
 	
 	bool bIsLeverInteractable;
 	
+	UFUNCTION(BlueprintCallable, Category="Linked Object")
+		void ToggleLeverEnabled(const bool bEnabled);
+	
 	virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize) override;
 	
 protected:

@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/HeistPlayerInterface.h"
 
+#include "MotionWarpingComponent.h"
+
 
 ACourierCharacter::ACourierCharacter()
 {
@@ -16,6 +18,8 @@ ACourierCharacter::ACourierCharacter()
 	ObstacleCheckRadius = 20.0f;
 	
 	ObstaclePushAwayForce = 50000.0f;
+	
+	MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpComp");
 }
 
 void ACourierCharacter::SetCutsceneAlpha(float NewAlpha)

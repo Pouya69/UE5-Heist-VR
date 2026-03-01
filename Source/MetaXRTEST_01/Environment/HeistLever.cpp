@@ -66,6 +66,23 @@ float AHeistLever::GetProgressNormalized() const
 	return (LeverHandleMeshComponent->GetRelativeTransform().Rotator().Pitch - InitialOffRotationPitch) / (TargetFullRotationPitch - InitialOffRotationPitch);
 }
 
+void AHeistLever::ToggleLeverEnabled(const bool bEnabled)
+{
+	if (bEnabled)
+	{
+		// BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		LeverHandleMeshComponent->SetVisibility(true, true);
+		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	else
+	{
+		// BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		LeverHandleMeshComponent->SetVisibility(false, true);
+		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	
+}
+
 void AHeistLever::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 {
 	Super::OnPlayerChangeSize(NewPlayerSize);
