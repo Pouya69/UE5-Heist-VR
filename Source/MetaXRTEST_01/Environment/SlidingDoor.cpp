@@ -53,6 +53,18 @@ ASlidingDoor::ASlidingDoor()
 	
 }
 
+bool ASlidingDoor::IsDoorJammed() const
+{
+	if (!LinkedConstraintComp) return false;
+	
+	return LinkedConstraintComp->ConstraintInstance.IsProjectionEnabled();
+}
+
+FVector ASlidingDoor::GetDoorOpenDirection() const
+{
+	return BaseMeshComponent->GetForwardVector();
+}
+
 void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
 	IHeistInteractionInterface::Execute_Custom_Tick(LinkedConstraintActor, DeltaTime, nullptr);
@@ -65,7 +77,7 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	FVector ControllerLocation = ControllerTransformRelativeToHandle.GetTranslation();
 	ControllerLocation.Y = 0.0f;
 	ControllerLocation.X = 0.0f;
-	if (LinkedConstraintComp && LinkedConstraintComp->ConstraintInstance.IsProjectionEnabled())
+	if (IsDoorJammed())
 	{
 		ControllerLocation.Z = 0.0f;
 	}
@@ -143,7 +155,7 @@ void ASlidingDoor::OnHandleReleased(UHeistGrabComponent* ReleasedComponent,
 	FTimerDelegate Delegate;
 	Delegate.BindLambda([&, MotionControllerRef]()
 	{
-		if (LinkedConstraintComp && !LinkedConstraintComp->ConstraintInstance.IsProjectionEnabled())
+		if (!IsDoorJammed())
 		{
 			BaseMeshComponent->SetSimulatePhysics(true);
 			DoorPhysicsConstraint->SetConstrainedComponents(BaseMeshComponent, NAME_None, nullptr, NAME_None);

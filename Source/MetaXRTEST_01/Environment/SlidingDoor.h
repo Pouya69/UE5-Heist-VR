@@ -16,6 +16,12 @@ class METAXRTEST_01_API ASlidingDoor : public AGrabbable
 public:
 	ASlidingDoor();
 
+	UFUNCTION(BlueprintCallable, Category="Blocked")
+		bool IsDoorJammed() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Blocked")
+		FVector GetDoorOpenDirection() const;
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<UStaticMeshComponent> FirstHandleMeshComponent;

@@ -49,6 +49,13 @@ void AHeistLever::PostInitializeComponents()
 	
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
+		if (InitialOffRotationPitch > TargetFullRotationPitch)
+		{
+			const float NewInitial = InitialOffRotationPitch;
+			InitialOffRotationPitch = TargetFullRotationPitch;
+			TargetFullRotationPitch = NewInitial;
+		}
+		
 		GrabComponent->OnGrabbed.AddDynamic(this, &AHeistLever::OnLeverGrabbed);
 		GrabComponent->OnReleased.AddDynamic(this, &AHeistLever::OnLeverReleased);
 		
@@ -70,6 +77,7 @@ void AHeistLever::ToggleLeverEnabled(const bool bEnabled)
 {
 	if (bEnabled)
 	{
+		LeverHandleMeshComponent->SetRelativeRotation(FRotator(InitialOffRotationPitch, 0.0f, 0.0f), false);
 		// BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		LeverHandleMeshComponent->SetVisibility(true, true);
 		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

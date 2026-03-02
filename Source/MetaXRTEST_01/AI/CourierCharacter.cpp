@@ -32,10 +32,11 @@ void ACourierCharacter::SetLookAtPlayerAlpha(float NewAlpha)
 	LookAtPlayerAlpha = NewAlpha;
 }
 
-void ACourierCharacter::FocusOnPlayer()
+void ACourierCharacter::FocusOnPlayer(const float NewAlpha)
 {
 	CurrentLookingAtTarget = PlayerCameraRefSceneComponent;
-	LookAtPlayerAlpha = 1.0f;
+	
+	LookAtPlayerAlpha = NewAlpha;
 }
 
 void ACourierCharacter::ClearFocus()

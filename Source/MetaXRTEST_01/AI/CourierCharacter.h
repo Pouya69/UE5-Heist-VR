@@ -42,7 +42,7 @@ public:
 		TObjectPtr<ACourierController> CourierControllerRef;
 	
 	UFUNCTION(BlueprintCallable, Category = "Focus")
-		void FocusOnPlayer();
+		void FocusOnPlayer(const float NewAlpha);
 	
 	UFUNCTION(BlueprintCallable, Category = "Focus")
 		void ClearFocus();

@@ -39,6 +39,12 @@ public:
 		UPhysicsConstraintComponent* GetPhysicsConstraintComp();
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void ObjectSlowedDown();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void ObjectOutOfSlowMotion();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void SetIsInFocus(const bool bIsInFocus);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
