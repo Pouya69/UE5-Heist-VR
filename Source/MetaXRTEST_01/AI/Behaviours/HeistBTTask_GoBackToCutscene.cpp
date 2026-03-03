@@ -8,12 +8,14 @@
 
 EBTNodeResult::Type UHeistBTTask_GoBackToCutscene::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is Moving To Destination", false);
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is In Cutscene", true);
-	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is Blocked By Obstacle", false);
+	OwnerComp.GetBlackboardComponent()->ClearValue("Is Moving To Destination");
+	OwnerComp.GetBlackboardComponent()->ClearValue("Is Blocked By Obstacle");
+
+	OwnerComp.GetBlackboardComponent()->ClearValue("Current Tracking Object");
 	
 	ULevelSequencePlayer* CurrentCutsceneRef = Cast<ULevelSequencePlayer>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("Current Cutscene Player Ref"));
-	OwnerComp.GetBlackboardComponent()->SetValueAsObject("Current Cutscene Player Ref", nullptr);
+	OwnerComp.GetBlackboardComponent()->ClearValue("Current Cutscene Player Ref");
 	CurrentCutsceneRef->Play();
 	
 	return EBTNodeResult::Succeeded;

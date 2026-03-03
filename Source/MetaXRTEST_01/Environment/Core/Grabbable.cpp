@@ -150,6 +150,10 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 				// Disappear tiny stuff.
 				GrabComponent->SetGrabbableVisible(true);
 			}
+			else
+			{
+				MainPrimitiveComp->PutAllRigidBodiesToSleep();
+			}
 			// For now, everything would be visible in Grabbable
 			if (!bIsConnectedToAnotherActor)
 			{
