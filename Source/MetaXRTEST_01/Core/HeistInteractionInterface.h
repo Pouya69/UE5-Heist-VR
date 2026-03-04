@@ -96,6 +96,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void SetAmount(const float NewAmount);
 	
+	// Useful for things that are derrived from wheels etc. For now it is only Crane.
+	// Amount is Normalize (0 <-> 1)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+		void SetAmount_02(const float NewAmount);
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		EHeistSize GetCurrentSizeOfGameObject();
 	

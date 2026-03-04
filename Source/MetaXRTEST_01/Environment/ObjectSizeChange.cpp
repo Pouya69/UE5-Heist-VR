@@ -218,7 +218,7 @@ void AObjectSizeChange::OnObjectEnteredVaccum(UPrimitiveComponent* OverlappedCom
 	});
 	GetWorldTimerManager().SetTimer(TimerHandle, Delegate, 0.2f, false);
 	
-	if (!RecentGrabbable || RecentGrabbable->GetGrabType() == EGrabTypeBase::TWO_HANDED || !RecentGrabbable->bCanChangeSize || RecentGrabbable->CurrentSize == OtherObjectSizeChangerSide->CurrentSize) return;
+	if (!RecentGrabbable || !RecentGrabbable->bCanChangeSize || RecentGrabbable->CurrentSize == OtherObjectSizeChangerSide->CurrentSize) return;
 	UPrimitiveComponent* ObjectPrimitiveComp = RecentGrabbable->GetMainPrimitiveComponent();
 	if (ObjectPrimitiveComp->GetComponentVelocity().GetSafeNormal().Dot(UKismetMathLibrary::GetUpVector(SpitOutTransform.Rotator())) >= 0.97f)
 	{

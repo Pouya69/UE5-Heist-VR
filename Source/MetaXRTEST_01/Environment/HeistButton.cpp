@@ -34,6 +34,9 @@ AHeistButton::AHeistButton()
 	TriggerSphereOverlapComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ButtonTriggerComp"));
 	TriggerSphereOverlapComponent->SetCollisionProfileName("Button_Trigger");
 	TriggerSphereOverlapComponent->SetupAttachment(ButtonBaseMeshComponent);
+	
+	bIsPowered = true;
+	MinimumMass = -1.0f;
 }
 
 void AHeistButton::PostInitializeComponents()
@@ -88,7 +91,11 @@ void AHeistButton::Interact_Implementation()
 void AHeistButton::OnTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!bIsPowered) return;
+	
 	if (bIsButtonActive) return;
+	
+	if (OtherComp->GetMass() < MinimumMass) return;
 	
 	if (OtherActor->Implements<UHeistInteractionInterface>())
 	{
@@ -108,6 +115,8 @@ void AHeistButton::OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent,
 {
 	// ButtonMovingMeshComponent->SetSimulatePhysics(false);
 	if (!bIsButtonActive) return;
+	
+	if (OtherComp->GetMass() < MinimumMass) return;
 	
 	TArray<UPrimitiveComponent*> OverlappedComponents;
 	GetOverlappingComponents(OverlappedComponents);

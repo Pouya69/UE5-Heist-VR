@@ -41,6 +41,9 @@ public:
 	// HAS TO BE SET USING: InitializeGrabComponent()
 	UPROPERTY(BlueprintReadOnly, Category="Grab Component | OtherComponents")
 		TObjectPtr<UPrimitiveComponent> PrimitiveComponent;
+	
+	UFUNCTION(BlueprintCallable, Category="Initialization")
+		void SetPrimitiveComponent(UPrimitiveComponent* InPrimitiveComp);
 
 protected:
 	
@@ -133,7 +136,7 @@ public:
 	
 	UPrimitiveComponent* GetPrimitiveComponentAttached() const;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grab Component")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Grab Component")
 		EGrabTypeBase GrabTypeBase;
 	
 	UFUNCTION(BlueprintCallable, Category="Grab Component")

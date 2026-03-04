@@ -22,8 +22,13 @@ UHeistGrabComponent::UHeistGrabComponent()
 	HandDetachmentDistanceThreshold = 50.0f;
 }
 
+void UHeistGrabComponent::SetPrimitiveComponent(UPrimitiveComponent* InPrimitiveComp)
+{
+	PrimitiveComponent = InPrimitiveComp;
+}
+
 void UHeistGrabComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+                                        FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	

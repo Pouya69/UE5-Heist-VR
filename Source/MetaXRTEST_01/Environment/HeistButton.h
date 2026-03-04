@@ -55,6 +55,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Button")
 		float ButtonPushedInDifference;
 	
+	// If <= 0, We use anything. If not, the pushed object needs to be more than this mass.
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Button")
+		float MinimumMass;
+	
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category="Button")
+		bool bIsPowered;
+		
+	
 	UPROPERTY(EditAnywhere, Category="Button")
 		float ButtonActivationForceThreshold;
 

@@ -73,7 +73,8 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 		}
 	}
 	
-	IHeistInteractionInterface::Execute_ObjectSlowedDown(ObjectToAffect);
+	if (ObjectToAffect->Implements<UHeistInteractionInterface>())
+		IHeistInteractionInterface::Execute_ObjectSlowedDown(ObjectToAffect);
 	
 	
 	
@@ -96,7 +97,8 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 				ObjectBodyInstance->SetEnableGravity(true);
 			}
 			
-			IHeistInteractionInterface::Execute_ObjectOutOfSlowMotion(ObjectToAffect);
+			if (ObjectToAffect->Implements<UHeistInteractionInterface>())
+				IHeistInteractionInterface::Execute_ObjectOutOfSlowMotion(ObjectToAffect);
 		});
 		
 		ObjectWorld->GetTimerManager().SetTimer(OutTimeDilationTimerHandle, Delegate, Duration, false);
