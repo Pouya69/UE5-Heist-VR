@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "HeistPistol.generated.h"
 
+class UHeistPlayerMainComponent;
 class UHeistPistolAnimInstance;
 class UNiagaraSystem;
 class AHeistBullet;
@@ -54,7 +55,13 @@ public:
 		bool bIsRightHandEquipped;
 		
 	UFUNCTION(BlueprintCallable, Category="Pistol | Equip")
-		void InitializePistol(USkeletalMeshComponent* HandToAttachTo, const bool bIsRightHand);
+		void InitializePistol(UHeistPlayerMainComponent* InPlayerComp, USkeletalMeshComponent* HandToAttachTo, const bool bIsRightHand);
+	
+	UPROPERTY()
+		USkeletalMeshComponent* CurrentHandHoldingThis;
+	
+	UPROPERTY()
+		UHeistPlayerMainComponent* PlayerComp;
 	
 protected:
 	virtual void BeginPlay() override;

@@ -87,11 +87,11 @@ void UDetachableGrabComponent::AttachToAnchorPoint(AGrabbable* OwnerGrabbable, U
 		WheelOwner->WheelMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 		WheelOwner->HandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 
+		OwnerGrabbable->AttachToComponent(NewAnchorToAttachTo, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false));
 	}
 	
 	
 	
-	OwnerGrabbable->AttachToComponent(NewAnchorToAttachTo, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false));
 	
 	if (ControllerRef == nullptr) return;
 	// OwnerGrabbable->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);

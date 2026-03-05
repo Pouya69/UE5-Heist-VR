@@ -37,11 +37,6 @@ protected:
 		TObjectPtr<USkeletalMeshComponent> LeftGhostHandRef;
 	
 	UPROPERTY()
-		TObjectPtr<USkeletalMeshComponent> RightPhysicsHandRef;
-	UPROPERTY()
-		TObjectPtr<USkeletalMeshComponent> LeftPhysicsHandRef;
-	
-	UPROPERTY()
 		TObjectPtr<UHeistMotionControllerComponent> RightMotionControllerRef;
 	UPROPERTY()
 		TObjectPtr<UHeistMotionControllerComponent> LeftMotionControllerRef;
@@ -84,6 +79,11 @@ protected:
 	float PlayerCapsuleHalfHeight;
 
 public:
+	UPROPERTY()
+		TObjectPtr<USkeletalMeshComponent> RightPhysicsHandRef;
+	UPROPERTY()
+		TObjectPtr<USkeletalMeshComponent> LeftPhysicsHandRef;
+	
 	UPROPERTY(BlueprintReadWrite, Category="Equipment")
 		EHeistEquipmentType CurrentEquippedEquipment;	
 	

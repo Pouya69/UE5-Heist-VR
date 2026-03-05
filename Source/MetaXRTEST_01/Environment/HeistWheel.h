@@ -26,6 +26,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Linked Object")
 		void ChangeLinkedActor(AActor* NewLinkedActor);
 	
+	// False -> 1, true -> 2
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
+		bool bIsSetAmount1or2;
+	
 	// 0 is not turned at all, 1 is full turned. (InitialOffRotationRoll -> TargetFullRotationRoll)
 	UFUNCTION(BlueprintCallable, Category="Progress")
 		float GetProgressNormalized() const;

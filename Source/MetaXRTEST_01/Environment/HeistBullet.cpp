@@ -12,6 +12,7 @@
 #include "Components/SphereComponent.h"
 #include "Core/HeistFunctionLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Player/HeistPlayerMainComponent.h"
 
 
 AHeistBullet::AHeistBullet()
@@ -31,7 +32,7 @@ AHeistBullet::AHeistBullet()
 	BulletProjectileMovementComponent->Friction = 5.0f;
 	BulletProjectileMovementComponent->bInterpMovement = true;
 	BulletProjectileMovementComponent->InitialSpeed = 500.0f;
-	BulletProjectileMovementComponent->MaxSpeed = 500.0f;
+	BulletProjectileMovementComponent->MaxSpeed = 99999.0f;
 	BulletProjectileMovementComponent->Velocity = FVector(500.0f, 0.0f, 0.0f);
 	BulletProjectileMovementComponent->SetComponentTickEnabled(false);
 	
@@ -56,8 +57,6 @@ void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const flo
 {
 	CustomTimeDilation = 1.0f / UGameplayStatics::GetGlobalTimeDilation(GetWorld());  // Make it move independetly.
 	
-	SetActorTransform(BulletTransform, false, nullptr, ETeleportType::TeleportPhysics);
-	
 	TargetTimeDilation = BulletTargetTimeDilation;
 	bIsActiveBullet = true;
 	
@@ -73,11 +72,15 @@ void AHeistBullet::InitializeBullet(const FTransform& BulletTransform, const flo
 	BulletLoopedFX->SetComponentTickEnabled(true);
 	
 	FTimerDelegate Delegate;
-	Delegate.BindLambda([&, BulletTransform]()
+	Delegate.BindLambda([&]()
 	{
+		const FTransform BTransform = PistolReference->GetPistolSkeletalMeshComponent()->GetSocketTransform(PistolReference->PistolMuzzleSocketName);
+		SetActorTransform(BTransform, false, nullptr, ETeleportType::TeleportPhysics);
 		// BulletProjectileMovementComponent->SetComponentTickEnabled(true);
 		BulletProjectileMovementComponent->Activate(true);
-		BulletProjectileMovementComponent->Velocity = UKismetMathLibrary::GetForwardVector(BulletTransform.Rotator()) * BulletProjectileMovementComponent->InitialSpeed;
+		BulletProjectileMovementComponent->Velocity = (UKismetMathLibrary::GetForwardVector(BTransform.Rotator()) * BulletProjectileMovementComponent->InitialSpeed)
+		+ PistolReference->PlayerComp->RightPhysicsHandRef->GetComponentVelocity();
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *BulletProjectileMovementComponent->Velocity.ToCompactString());
 		BulletProjectileMovementComponent->UpdateComponentVelocity();
 		BulletProjectileMovementComponent->bSimulationEnabled = true;
 		

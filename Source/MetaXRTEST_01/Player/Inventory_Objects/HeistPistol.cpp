@@ -117,11 +117,13 @@ USkeletalMeshComponent* AHeistPistol::GetPistolSkeletalMeshComponent()
 	return PistolMeshComponent;
 }
 
-void AHeistPistol::InitializePistol(USkeletalMeshComponent* HandToAttachTo, const bool bIsRightHand)
+void AHeistPistol::InitializePistol(UHeistPlayerMainComponent* InPlayerComp, USkeletalMeshComponent* HandToAttachTo, const bool bIsRightHand)
 {
 	// HandToAttachTo->IgnoreActorWhenMoving(this, true);
 	// GetPistolSkeletalMeshComponent()->IgnoreActorWhenMoving(GetOwner(), true);
 	// GetPistolSkeletalMeshComponent()->IgnoreComponentWhenMoving(HandToAttachTo, true);
+	CurrentHandHoldingThis = HandToAttachTo;
+	PlayerComp = InPlayerComp;
 	bIsRightHandEquipped = bIsRightHand;
 	InitializeBulletPools();
 }

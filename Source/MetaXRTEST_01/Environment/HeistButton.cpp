@@ -92,10 +92,16 @@ void AHeistButton::OnTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AA
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!bIsPowered) return;
-	
 	if (bIsButtonActive) return;
 	
-	if (OtherComp->GetMass() < MinimumMass) return;
+	const bool bIsPlayer = OtherActor->IsA(APawn::StaticClass());
+	if (bOnlyPlayerCanActivate && !bIsPlayer)
+	{
+		return;
+	}
+	
+	if (!bIsPlayer)
+		if (OtherComp->GetMass() < MinimumMass) return;
 	
 	if (OtherActor->Implements<UHeistInteractionInterface>())
 	{
@@ -116,12 +122,23 @@ void AHeistButton::OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent,
 	// ButtonMovingMeshComponent->SetSimulatePhysics(false);
 	if (!bIsButtonActive) return;
 	
-	if (OtherComp->GetMass() < MinimumMass) return;
+	if (!OtherActor->IsA(APawn::StaticClass()))
+		if (OtherComp->GetMass() < MinimumMass) return;
 	
 	TArray<UPrimitiveComponent*> OverlappedComponents;
 	GetOverlappingComponents(OverlappedComponents);
 	
-	if (OverlappedComponents.IsEmpty())
+	bool bCanDeactivate = true;
+	for (const UPrimitiveComponent* OverlappedComp : OverlappedComponents)
+	{
+		if (OverlappedComp->GetOwner()->IsA(APawn::StaticClass()) || OverlappedComp->GetMass() >= MinimumMass)
+		{
+			bCanDeactivate = false;
+			break;
+		}
+	}
+	
+	if (OverlappedComponents.IsEmpty() || bCanDeactivate)
 	{
 		bIsButtonActive = false;
 	}

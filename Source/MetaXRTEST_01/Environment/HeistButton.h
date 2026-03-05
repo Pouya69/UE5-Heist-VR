@@ -59,6 +59,9 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Button")
 		float MinimumMass;
 	
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Button")
+		bool bOnlyPlayerCanActivate;
+	
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category="Button")
 		bool bIsPowered;
 		

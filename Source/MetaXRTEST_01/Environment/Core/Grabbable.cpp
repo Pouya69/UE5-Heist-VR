@@ -135,7 +135,8 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 			if (bIsTiny)
 			{
 				// Disappear tiny stuff.
-				GrabComponent->SetGrabbableVisible(false);
+				if (!bIsConnectedToAnotherActor)
+					GrabComponent->SetGrabbableVisible(false);
 			}
 			if (!bIsConnectedToAnotherActor)
 			{
@@ -147,7 +148,6 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		case EHeistSize::TINY:
 			if (bIsTiny)
 			{
-				// Disappear tiny stuff.
 				GrabComponent->SetGrabbableVisible(true);
 			}
 			else
@@ -230,8 +230,11 @@ void AGrabbable::SetNewSizeTo_Implementation(EHeistSize NewSize)
 
 void AGrabbable::OnReleased_Default(UHeistGrabComponent* GrabbedComponent, UHeistMotionControllerComponent* MotionControllerRef)
 {
-	GetWorldTimerManager().ClearTimer(RemoteGrabTimerHandle);
-	GetWorldTimerManager().SetTimer(RemoteGrabTimerHandle, 1.8f, false);
+	if (bIsRemoteGrabbable)
+	{
+		GetWorldTimerManager().ClearTimer(RemoteGrabTimerHandle);
+		GetWorldTimerManager().SetTimer(RemoteGrabTimerHandle, 1.8f, false);
+	}
 }
 
 void AGrabbable::PostInitializeComponents()
@@ -248,7 +251,8 @@ void AGrabbable::PostInitializeComponents()
 			GrabComponent->SetPrimitiveComponentPhysicsEnabled(false);
 		}
 		
-		GrabComponent->OnReleased.AddDynamic(this, &AGrabbable::OnReleased_Default);
+		if (bIsRemoteGrabbable)
+			GrabComponent->OnReleased.AddDynamic(this, &AGrabbable::OnReleased_Default);
 		AHeistGameMode* GM = Cast<AHeistGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		GM->OnPlayerChangeSize.AddDynamic(this, &AGrabbable::OnPlayerChangeSize);
 		

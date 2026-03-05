@@ -25,6 +25,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		float InitialOffRotationPitch;
 	
+	// False -> 1, true -> 2
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
+		bool bIsSetAmount1or2;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		float TargetFullRotationPitch;
 	

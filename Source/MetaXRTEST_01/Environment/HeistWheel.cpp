@@ -50,6 +50,7 @@ AHeistWheel::AHeistWheel()
 	CheckForPlayerEverySecondsForStopTick = 2.0f;
 	
 	bIsHandRotationFixed = false;
+	bIsSetAmount1or2 = false;
 }
 
 void AHeistWheel::ChangeLinkedActor(AActor* NewLinkedActor)
@@ -241,7 +242,14 @@ void AHeistWheel::Tick(float DeltaTime)
 	switch (LeverInteractionType)
 	{
 	case EHeistObjectInteractionType::CONTINUOUS_ONLY:
-		Execute_SetAmount(LinkedActor, ProgressNormalized);
+		if (bIsSetAmount1or2)
+		{
+			Execute_SetAmount(LinkedActor, ProgressNormalized);
+		}
+		else
+		{
+			Execute_SetAmount_02(LinkedActor, ProgressNormalized);
+		}
 		break;
 		
 	case EHeistObjectInteractionType::TRIGGER_ON_INTERACTION_ONLY:
@@ -268,7 +276,14 @@ void AHeistWheel::Tick(float DeltaTime)
 				return;
 			}
 		}
-		Execute_SetAmount(LinkedActor, ProgressNormalized);
+		if (bIsSetAmount1or2)
+		{
+			Execute_SetAmount(LinkedActor, ProgressNormalized);
+		}
+		else
+		{
+			Execute_SetAmount_02(LinkedActor, ProgressNormalized);
+		}
 		break;
 		
 	}

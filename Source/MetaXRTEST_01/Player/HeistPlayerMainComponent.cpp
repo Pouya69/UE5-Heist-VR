@@ -122,7 +122,7 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSi
 	LeftHandGrabPhysicsConstraint = InLeftHandGrabPhysicsConstraint;
 	
 	PistolAttachedToHand = InHeistPistol;
-	InHeistPistol->InitializePistol(RightPhysicsHandRef, true);
+	InHeistPistol->InitializePistol(this, RightPhysicsHandRef, true);
 	TogglePistolEnabled(false);
 	
 	CurrentEquippedEquipment = EHeistEquipmentType::NONE;
@@ -152,15 +152,13 @@ void UHeistPlayerMainComponent::InitializePlayerComponent(EHeistSize InCurrentSi
 
 void UHeistPlayerMainComponent::RemoteGrabRight()
 {
-	FHitResult RightHitResult;
-	
 	const FVector RightHandLocation = RightPhysicsHandRef->GetComponentLocation();
-	const FVector RightEndLocation = RightHandLocation + RightPhysicsHandRef->GetRightVector() * RemoteGrabRange;
-	
-	const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(RemoteGrabRadiusCheck);
-	
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(GetOwner());
+	if (RightMotionControllerRef->CurrentGrabbedComp)
+	{
+		// For pistol.
+		RightHandPreviousLocation = RightHandLocation;
+		return;
+	}
 	
 	const FVector CurrentHandMovementDirectionWithLength = RightHandLocation - RightHandPreviousLocation;
 	const float Length = CurrentHandMovementDirectionWithLength.Length();
@@ -174,6 +172,14 @@ void UHeistPlayerMainComponent::RemoteGrabRight()
 		RightHandPreviousLocation = RightHandLocation;
 		return;
 	}
+	
+	FHitResult RightHitResult;
+	const FVector RightEndLocation = RightHandLocation + RightPhysicsHandRef->GetRightVector() * RemoteGrabRange;
+	
+	const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(RemoteGrabRadiusCheck);
+	
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(GetOwner());
 	
 	const bool bDidRightHit = GetWorld()->SweepSingleByChannel(RightHitResult, RightHandLocation, RightEndLocation, FQuat::Identity, GRAB_CHANNEL, CollisionShape, Params);
 	

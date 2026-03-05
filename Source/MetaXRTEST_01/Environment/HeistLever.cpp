@@ -41,6 +41,8 @@ AHeistLever::AHeistLever()
 	HandLocationOffset_FromLeverForward = 100.0f;
 	
 	bCanChangeSize = false;
+	
+	bIsSetAmount1or2 = false;
 }
 
 void AHeistLever::PostInitializeComponents()
@@ -100,7 +102,8 @@ void AHeistLever::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	{
 		BaseMeshComponent->SetSimulatePhysics(bActive);
 	}
-	BaseMeshComponent->SetVisibility(bActive, true);
+	if (!bIsConnectedToAnotherActor)
+		BaseMeshComponent->SetVisibility(bActive, true);
 }
 
 bool AHeistLever::GetIsInteractable_Implementation() const
@@ -201,7 +204,14 @@ void AHeistLever::Tick(float DeltaTime)
 	switch (LeverInteractionType)
 	{
 		case EHeistObjectInteractionType::CONTINUOUS_ONLY:
-			Execute_SetAmount(LinkedActor, ProgressNormalized);
+			if (bIsSetAmount1or2)
+			{
+				Execute_SetAmount(LinkedActor, ProgressNormalized);
+			}
+			else
+			{
+				Execute_SetAmount_02(LinkedActor, ProgressNormalized);
+			}
 			break;
 		
 		case EHeistObjectInteractionType::TRIGGER_ON_INTERACTION_ONLY:
@@ -228,7 +238,14 @@ void AHeistLever::Tick(float DeltaTime)
 					return;
 				}
 			}
-			Execute_SetAmount(LinkedActor, ProgressNormalized);
+			if (bIsSetAmount1or2)
+			{
+				Execute_SetAmount(LinkedActor, ProgressNormalized);
+			}
+			else
+			{
+				Execute_SetAmount_02(LinkedActor, ProgressNormalized);
+			}
 			break;
 		
 	}
