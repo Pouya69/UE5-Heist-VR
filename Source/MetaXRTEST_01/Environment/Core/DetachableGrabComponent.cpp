@@ -31,12 +31,14 @@ void UDetachableGrabComponent::BeginPlay()
 
 bool UDetachableGrabComponent::DetachWhenTooFarFromGrabbable()
 {
-	if (CurrentMotionControllerHoldingThis == nullptr || 
-		FVector::Dist(CurrentMotionControllerHoldingThis->GetComponentLocation(), CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation()) <= HandDetachmentDistanceThreshold) return false;
+	// if (CurrentMotionControllerHoldingThis == nullptr || 
+		// FVector::Dist(CurrentMotionControllerHoldingThis->GetComponentLocation(), CurrentMotionControllerHoldingThis->PhysicsHandRef->GetComponentLocation()) <= HandDetachmentDistanceThreshold) return false;
 	
-	if (!bIsDetachable)
-		return Super::DetachWhenTooFarFromGrabbable();
+	// if (!bIsDetachable)
+		// return Super::DetachWhenTooFarFromGrabbable();
 	
+	return Super::DetachWhenTooFarFromGrabbable();
+	/*
 	UHeistMotionControllerComponent* ControllerRef = CurrentMotionControllerHoldingThis;
 	
 	if (AHeistWheel* WheelOwner = Cast<AHeistWheel>(GetOwner()))
@@ -67,6 +69,7 @@ bool UDetachableGrabComponent::DetachWhenTooFarFromGrabbable()
 	
 	return true;
 	
+	*/
 }
 
 void UDetachableGrabComponent::AttachToAnchorPoint(AGrabbable* OwnerGrabbable, USceneComponent* NewAnchorToAttachTo, UHeistMotionControllerComponent* ControllerRef)
