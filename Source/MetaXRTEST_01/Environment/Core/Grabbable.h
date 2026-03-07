@@ -49,6 +49,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Grab")
 		virtual EGrabTypeBase GetGrabType() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Grab")
+		void SetIsRemoteGrabbable(const bool bIsGrabbable);
+	
 	FVector StartingScale;
 	
 	UFUNCTION(BlueprintCallable, Category = "Grab")

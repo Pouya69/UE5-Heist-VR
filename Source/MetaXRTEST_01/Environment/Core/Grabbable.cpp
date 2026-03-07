@@ -53,6 +53,11 @@ EGrabTypeBase AGrabbable::GetGrabType() const
 	return GrabComponent->GrabTypeBase;
 }
 
+void AGrabbable::SetIsRemoteGrabbable(const bool bIsGrabbable)
+{
+	bIsRemoteGrabbable = bIsGrabbable;
+}
+
 void AGrabbable::ForceRelease()
 {
 	if (!GrabComponent->IsBeingHeld()) return;

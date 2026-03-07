@@ -126,10 +126,20 @@ void ADoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabC
 	
 	FTransform ControllerTransformRelativeToAnchor = ControllerTransform.GetRelativeTransform(HandleAnchorTransform);
 	
-	const float FinalHandleAndHandPitchRotation = GrabComponent->GetHeldByHand() == EControllerHand::Left ? ControllerTransformRelativeToAnchor.GetRotation().Rotator().Pitch
-	: -ControllerTransformRelativeToAnchor.GetRotation().Rotator().Pitch;
+	// const float FinalHandleAndHandPitchRotation = GrabComponent->GetHeldByHand() == EControllerHand::Left ? ControllerTransformRelativeToAnchor.GetRotation().Rotator().Pitch
+	// : -ControllerTransformRelativeToAnchor.GetRotation().Rotator().Pitch;
 	
-	bIsHandlePushedDown = FinalHandleAndHandPitchRotation <= DoorOpenTriggerHandleThresholdPitch;  // For being able to.
+	FVector HandLocationRelativeToAnchor = ControllerTransformRelativeToAnchor.GetTranslation();
+	
+	HandLocationRelativeToAnchor.Y = 0.0f;
+	HandLocationRelativeToAnchor.Normalize();
+	
+	FRotator HandleRotationFinal = HandLocationRelativeToAnchor.Rotation();
+	UE_LOG(LogTemp, Log, TEXT("%s"), *HandleRotationFinal.ToCompactString());
+	
+	// HandleRotationFinal.Pitch = FMath::Clamp(HandleRotationFinal.Pitch, DoorHandleMinPitch, DoorHandleMaxPitch);
+	
+	bIsHandlePushedDown = HandleRotationFinal.Pitch <= DoorOpenTriggerHandleThresholdPitch;  // For being able to.
 	
 	if (bIsHandlePushedDown && !IsDoorOpen())
 	{
@@ -137,12 +147,12 @@ void ADoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabC
 		OpenCloseDoor(true);
 	}
 	
-	const FRotator FinalRotationHandle = FRotator(FinalHandleAndHandPitchRotation,0.0f,0.0f);
+	// const FRotator FinalRotationHandle = FRotator(FinalHandleAndHandPitchRotation,0.0f,0.0f);
 	
-	HandleAnchorComponent->SetRelativeRotation(FinalRotationHandle, true, nullptr, ETeleportType::TeleportPhysics);
+	HandleAnchorComponent->SetRelativeRotation(HandleRotationFinal, true, nullptr, ETeleportType::TeleportPhysics);
 	
 	ControllerTransformRelativeToAnchor.SetLocation(DoorHandleHandLocationOffset);
-	ControllerTransformRelativeToAnchor.SetRotation(DoorHandleHandRotationOffset.Quaternion());
+	ControllerTransformRelativeToAnchor.SetRotation((DoorHandleHandRotationOffset + HandleRotationFinal).Quaternion());
 
 	
 	ControllerTransformRelativeToAnchor = ControllerTransformRelativeToAnchor * HandleAnchorTransform;
@@ -227,7 +237,7 @@ void ADoor::OpenCloseDoor(bool bOpen)
 	if (bOpen)
 	{
 		DoorMeshComponent->SetSimulatePhysics(true);
-		DoorConstraint->InitComponentConstraint();
+		DoorConstraint->SetConstrainedComponents(DoorMeshComponent, NAME_None, nullptr, NAME_None);
 		SetActorTickEnabled(true);
 		
 		if (CVarDoorOpen.GetValueOnGameThread())
@@ -238,6 +248,7 @@ void ADoor::OpenCloseDoor(bool bOpen)
 	else
 	{
 		// Close
+		DoorConstraint->BreakConstraint();
 		DoorMeshComponent->SetSimulatePhysics(false);
 		DoorMeshComponent->SetWorldRotation(DoorClosedRotation);
 		
