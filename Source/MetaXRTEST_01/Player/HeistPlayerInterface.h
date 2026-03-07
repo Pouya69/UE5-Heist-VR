@@ -44,6 +44,12 @@ public:
 		bool ChangeSize(EHeistSize PlayerSize, const FVector NewLocation);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void GotInCart(const bool bInCart);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void TeleportPlayerTo(const FVector NewLocation);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void LeftForceRelease();
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")

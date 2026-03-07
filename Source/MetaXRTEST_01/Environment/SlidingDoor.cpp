@@ -3,6 +3,7 @@
 
 #include "SlidingDoor.h"
 
+#include "Core/HeistGameMode.h"
 #include "Core/HeistGrabComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
@@ -63,6 +64,25 @@ bool ASlidingDoor::IsDoorJammed() const
 FVector ASlidingDoor::GetDoorOpenDirection() const
 {
 	return BaseMeshComponent->GetForwardVector();
+}
+
+void ASlidingDoor::SlideDoorOnPlayerChangeSize(EHeistSize NewPlayerSize)
+{
+	DoorPhysicsConstraint->BreakConstraint();
+	BaseMeshComponent->SetSimulatePhysics(false);
+	
+	if (CurrentSize == NewPlayerSize)
+	{
+		FTimerHandle Handle;
+		FTimerDelegate Delegate;
+		Delegate.BindLambda([&]()
+		{
+			BaseMeshComponent->SetSimulatePhysics(true);
+			DoorPhysicsConstraint->SetConstrainedComponents(BaseMeshComponent, NAME_None, nullptr, NAME_None);
+		});
+	
+		GetWorldTimerManager().SetTimer(Handle, Delegate, 0.2f, false);
+	}
 }
 
 void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
@@ -210,6 +230,9 @@ void ASlidingDoor::PostInitializeComponents()
 		
 		BaseLocationOffsetFromHandle = FirstHandleMeshComponent->GetRelativeLocation();
 		BaseLocationOffsetFromHandle2 = SecondHandleMeshComponent->GetRelativeLocation();
+		
+		AHeistGameMode* GM = Cast<AHeistGameMode>(GetWorld()->GetAuthGameMode());
+		GM->OnPlayerChangeSize.AddDynamic(this, &ASlidingDoor::SlideDoorOnPlayerChangeSize);
 	}
 }
 

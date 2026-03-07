@@ -26,6 +26,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<UStaticMeshComponent> FirstHandleMeshComponent;
 	
+	UFUNCTION()
+		void SlideDoorOnPlayerChangeSize(EHeistSize NewPlayerSize);
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		TObjectPtr<UStaticMeshComponent> SecondHandleMeshComponent;
 	

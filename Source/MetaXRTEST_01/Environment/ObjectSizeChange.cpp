@@ -82,7 +82,7 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 	
 	
 
-	UE_LOG(LogTemp, Log, TEXT("%s"), *NewScale.ToString());
+	// UE_LOG(LogTemp, Log, TEXT("%s"), *NewScale.ToString());
 	// UHeistFunctionLibrary::ChangeSizeTo(GrabbableToSpitOut, CurrentSize, FVector::ZeroVector, FRotator::ZeroRotator);
 	
 	GrabbableToSpitOut->ToggleActivateGrabbable(false);

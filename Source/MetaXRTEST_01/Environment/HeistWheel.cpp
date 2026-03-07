@@ -329,6 +329,7 @@ void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 	SetActorTickEnabled(true);
 	GrabComponent->SetComponentTickEnabled(true);
 	
+	IHeistInteractionInterface::Execute_SetIsInFocus(LinkedActor, true);
 	
 	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
@@ -342,6 +343,7 @@ void AHeistWheel::OnWheelReleased(UHeistGrabComponent* ReleasedComponent,
 {
 	if (BaseMeshComponent->IsSimulatingPhysics()) return;
 	
+	IHeistInteractionInterface::Execute_SetIsInFocus(LinkedActor, false);
 	if (!bShouldGoBackToInitialPositionWhenNotHeld)
 	{
 		// Because it will never go back to initial, we will just disable tick here instead.

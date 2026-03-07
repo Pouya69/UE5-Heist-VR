@@ -158,6 +158,7 @@ void ADoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabC
 		return;
 	}
 	
+	
 	if (CVarDebugDrawHandleAndHandRelation.GetValueOnGameThread())
 	{
 		DrawDebugBox(GetWorld(), HandPosition, FVector(5,5,5), HandRotation, FColor::Green);
