@@ -55,12 +55,14 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 	ObjectWorld->GetTimerManager().ClearAllTimersForObject(ObjectToAffect);
 	
 	// Instant
+	const float PreviousDilation = ObjectToAffect->CustomTimeDilation;
 	ObjectToAffect->CustomTimeDilation = DilationAmount;
 	
 	APawn* CharacterToAffect = Cast<APawn>(ObjectToAffect);
 	
 	UPrimitiveComponent* ObjectPrimComp = Cast<UPrimitiveComponent>(ObjectToAffect->GetRootComponent());
 	FBodyInstance* ObjectBodyInstance;
+	
 	if (!CharacterToAffect)
 	{
 		if (ObjectPrimComp)
@@ -84,10 +86,10 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 		// Timer based to go back to normal.
 		
 		FTimerDelegate Delegate;
-		Delegate.BindLambda([ObjectPrimComp, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount, CharacterToAffect]()
+		Delegate.BindLambda([ObjectPrimComp, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount, CharacterToAffect, PreviousDilation]()
 		{
 			ObjectToAffect->CustomTimeDilation = 1.0f;
-			
+
 			const float NewDilation = 1 / DilationAmount;
 			if (!CharacterToAffect && ObjectPrimComp && ObjectPrimComp->IsSimulatingPhysics())
 			{

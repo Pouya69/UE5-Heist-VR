@@ -154,7 +154,7 @@ void AHeistBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 	AddBulletToPool();
 	
 	const FVector EffectLocation = Hit.ImpactPoint;
-	const FRotator EffectRotation = Hit.ImpactNormal.Rotation();
+	const FRotator EffectRotation = Hit.Normal.Rotation();
 	
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, BulletImpactFX, Hit.ImpactPoint, EffectRotation);
 	UGameplayStatics::SpawnSoundAtLocation(this, BulletImpactSound, EffectLocation, EffectRotation);

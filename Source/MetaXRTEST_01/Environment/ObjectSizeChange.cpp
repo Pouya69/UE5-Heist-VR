@@ -48,10 +48,10 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 	FVector NewScale = GrabbableToSpitOut->GetActorScale3D() * UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize);
 	
 
-	
+	GrabbableToSpitOut->ForceRelease();
 	IHeistInteractionInterface::Execute_SetNewSizeTo(GrabbableToSpitOut, CurrentSize);
 	
-	GrabbableToSpitOut->ForceRelease();
+	
 	
 	UPrimitiveComponent* ObjectPrimitiveComp = GrabbableToSpitOut->GetMainPrimitiveComponent();
 	float NewObjectVelocityLength = ObjectPrimitiveComp->GetComponentVelocity().Length();
