@@ -39,21 +39,18 @@ AObjectSizeChange::AObjectSizeChange()
 	MaxForceOnSpitOut = 100.0f;
 }
 
-void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
+
+void AObjectSizeChange::SpitOutGrabbableAfterRelease(AGrabbable* GrabbableToSpitOut)
 {
-	if (CurrentSize == GrabbableToSpitOut->CurrentSize)
-	{
-		return;
-	}
+	UPrimitiveComponent* ObjectPrimitiveComp = GrabbableToSpitOut->GetMainPrimitiveComponent();
+	ObjectPrimitiveComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	FVector NewScale = GrabbableToSpitOut->GetActorScale3D() * UHeistFunctionLibrary::GetSizeMultiplierBasedOnType(CurrentSize);
 	
-
-	GrabbableToSpitOut->ForceRelease();
 	IHeistInteractionInterface::Execute_SetNewSizeTo(GrabbableToSpitOut, CurrentSize);
 	
 	
 	
-	UPrimitiveComponent* ObjectPrimitiveComp = GrabbableToSpitOut->GetMainPrimitiveComponent();
+
 	float NewObjectVelocityLength = ObjectPrimitiveComp->GetComponentVelocity().Length();
 	FVector NewObjectAngularVelocity = ObjectPrimitiveComp->GetPhysicsAngularVelocityInRadians();
 	
@@ -108,6 +105,10 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 	
 	if (ObjectPrimitiveComp->IsSimulatingPhysics())
 	{
+			
+		ObjectPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+		
 		NewObjectVelocityLength = FMath::Clamp(NewObjectVelocityLength, MinForceOnSpitOut * Multiplier, MaxForceOnSpitOut * Multiplier);
 	
 		const FVector NewObjectVelocity = NewObjectVelocityLength * Direction;
@@ -126,12 +127,17 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 				});
 				GetWorldTimerManager().SetTimerForNextTick(Delegate);
 			}
-		
 		}
 		else
 		{
-			ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
-			ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+			FTimerDelegate Delegate;
+			Delegate.BindLambda([&, GrabbableToSpitOut, ObjectPrimitiveComp, NewObjectVelocity, LocationAddition]()
+			{
+				ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+				ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+			});
+			GetWorldTimerManager().SetTimerForNextTick(Delegate);
+			
 		}
 		
 		// ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
@@ -145,6 +151,24 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 		GrabbableToSpitOut->TeleportTo(SpitOutTransform.GetTranslation() + LocationAddition, FRotator::ZeroRotatorw);
 	});
 	*/
+}
+
+void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
+{
+	if (CurrentSize == GrabbableToSpitOut->CurrentSize)
+	{
+		return;
+	}
+	
+
+	GrabbableToSpitOut->ForceRelease();
+	
+	FTimerDelegate Delegate;
+	Delegate.BindUFunction(this, TEXT("SpitOutGrabbableAfterRelease"), GrabbableToSpitOut);
+	
+	GetWorldTimerManager().SetTimerForNextTick(Delegate);
+	
+	
 }
 
 void AObjectSizeChange::OnPlayerChangeSize(EHeistSize NewPlayerSize)
@@ -204,7 +228,7 @@ void AObjectSizeChange::PostInitializeComponents()
 }
 
 void AObjectSizeChange::OnObjectEnteredVaccum(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                              UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (RecentPrimitiveComponent && OtherComp == RecentPrimitiveComponent) return;
 	AGrabbable* RecentGrabbable = Cast<AGrabbable>(OtherActor);

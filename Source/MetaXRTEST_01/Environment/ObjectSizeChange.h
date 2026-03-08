@@ -40,6 +40,9 @@ protected:
 	
 	virtual void PostInitializeComponents() override;
 	
+	UFUNCTION()
+		void SpitOutGrabbableAfterRelease(AGrabbable* GrabbableToSpitOut);
+	
 	UPROPERTY(EditAnywhere, Category="Size Change")
 		float AdditionToSpitTransform;
 	

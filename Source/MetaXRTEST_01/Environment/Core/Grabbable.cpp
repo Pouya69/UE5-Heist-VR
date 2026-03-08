@@ -61,6 +61,14 @@ void AGrabbable::SetIsRemoteGrabbable(const bool bIsGrabbable)
 void AGrabbable::ForceRelease()
 {
 	if (!GrabComponent->IsBeingHeld()) return;
+	
+	if (GetGrabType() == EGrabTypeBase::TWO_HANDED)
+	{
+		IHeistPlayerInterface::Execute_RightForceRelease(GrabComponent->CurrentMotionControllerHoldingThis->GetOwner());
+		IHeistPlayerInterface::Execute_LeftForceRelease(GrabComponent->CurrentMotionControllerHoldingThis->GetOwner());
+		return;
+	}
+	
 	const EControllerHand CurrentHand = GrabComponent->GetHeldByHand();
 
 	switch (CurrentHand)
