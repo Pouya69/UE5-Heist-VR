@@ -122,7 +122,7 @@ void AObjectSizeChange::SpitOutGrabbableAfterRelease(AGrabbable* GrabbableToSpit
 				FTimerDelegate Delegate;
 				Delegate.BindLambda([&, GrabbableToSpitOut, ObjectPrimitiveComp, NewObjectVelocity, LocationAddition]()
 				{
-					ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity / 10000.0f);
+					ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
 					ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 				});
 				GetWorldTimerManager().SetTimerForNextTick(Delegate);
@@ -133,7 +133,7 @@ void AObjectSizeChange::SpitOutGrabbableAfterRelease(AGrabbable* GrabbableToSpit
 			FTimerDelegate Delegate;
 			Delegate.BindLambda([&, GrabbableToSpitOut, ObjectPrimitiveComp, NewObjectVelocity, LocationAddition]()
 			{
-				ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity);
+				ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity / 5000.0f);
 				ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 			});
 			GetWorldTimerManager().SetTimerForNextTick(Delegate);

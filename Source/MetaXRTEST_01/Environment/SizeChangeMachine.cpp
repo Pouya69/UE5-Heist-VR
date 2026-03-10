@@ -6,6 +6,7 @@
 #include "Components/SplineComponent.h"
 #include "Core/DetachableGrabComponent.h"
 #include "Core/HeistFunctionLibrary.h"
+#include "Core/HeistGameMode.h"
 #include "Core/HeistTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/HeistMotionControllerComponent.h"
@@ -62,6 +63,8 @@ ASizeChangeMachine::ASizeChangeMachine()
 	AcceptableBonesToGrab.Add(TEXT("joint4_r"));
 	
 	bIsGrabbableActive = true;
+	
+	TrueSizeForTiny = FVector(0.001f, 0.001f, 0.001f);
 }
 
 bool ASizeChangeMachine::IsGrabbableBasedOnBoneHit(const FName BoneHit) const
@@ -89,8 +92,47 @@ void ASizeChangeMachine::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 {
 	Super::OnPlayerChangeSize(NewPlayerSize);
 	
+	if (CurrentSize == EHeistSize::TINY)
+	{
+		Machine_SK_Component->SetSkeletalMesh(MediumMeshRef, false);
+		if (NewPlayerSize == EHeistSize::TINY)
+			SetActorScale3D(FVector::OneVector);
+		else
+			SetActorScale3D(StartingScale);
+		// Machine_SK_Component->SetCollisionEnabled(CurrentSize == NewPlayerSize ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+	}
+	else
+	{
+		// Machine_SK_Component->SetSkeletalMesh(StartingMesh, false);
+		// SetActorScale3D(StartingScale);
+		// SetActorScale3D(TrueSizeForTiny);
+	}
+	Machine_SK_Component->SetCollisionEnabled(CurrentSize == NewPlayerSize ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 	LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 	RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
+	
+	
+}
+
+void ASizeChangeMachine::OnPlayerChangeSize_02(EHeistSize NewPlayerSize)
+{
+		/*
+	const bool bActive = NewPlayerSize == CurrentSize;
+	const bool bIsTiny = CurrentSize == EHeistSize::TINY;
+	if (bIsTiny)
+	{
+		if (NewPlayerSize == EHeistSize::TINY)
+		{
+			SetActorScale3D(StartingScale * 1000.0f);
+			SetActorLocation(GetActorLocation() * MEDIUM_SIZE_MULT, false, nullptr, ETeleportType::TeleportPhysics);
+		}
+		else
+		{
+			SetActorScale3D(StartingScale);
+			SetActorLocation(GetActorLocation() * 0.001f, false, nullptr, ETeleportType::TeleportPhysics);
+		}
+	}
+*/
 }
 
 void ASizeChangeMachine::PostInitializeComponents()
@@ -98,6 +140,8 @@ void ASizeChangeMachine::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
+		TeleportTransformDestination = TeleportDestinationSceneComponent->GetComponentTransform();
+		
 		GrabComponent->OnGrabbed.AddDynamic(this, &ASizeChangeMachine::OnHandleGrabbed);
 		SecondGrabComponent->OnGrabbed.AddDynamic(this, &ASizeChangeMachine::OnHandleGrabbed);
 	
@@ -109,6 +153,11 @@ void ASizeChangeMachine::PostInitializeComponents()
 			LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 			RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
 		}
+		
+		StartingMesh = Machine_SK_Component->GetSkeletalMeshAsset();
+		
+		// AHeistGameMode* GM = Cast<AHeistGameMode>(GetWorld()->GetAuthGameMode());
+		// GM->OnPlayerChangeSize.AddDynamic(this, &ASizeChangeMachine::OnPlayerChangeSize_02);
 		
 		const bool bActive = CurrentSize != EHeistSize::TINY;
 		// Machine_SK_Component->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
@@ -129,8 +178,11 @@ bool ASizeChangeMachine::IsReadyToUseSizeMachine() const
 
 bool ASizeChangeMachine::ChangePlayerSize()
 {
-	const bool bSuccess = IHeistPlayerInterface::Execute_ChangeSize(UGameplayStatics::GetPlayerPawn(this, 0), MachinePlayerSizeChange, GetNewPlayerLocationAfterTeleport());
+	UGameplayStatics::PlaySound2D(this, ChangeSizeSound);
 	
+	Machine_SK_Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	const bool bSuccess = IHeistPlayerInterface::Execute_ChangeSize(UGameplayStatics::GetPlayerPawn(this, 0), MachinePlayerSizeChange, GetNewPlayerLocationAfterTeleport());
 	return bSuccess;
 }
 
@@ -281,6 +333,14 @@ bool ASizeChangeMachine::GetGrabComponents_Implementation(TArray<UHeistGrabCompo
 void ASizeChangeMachine::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (CurrentSize == EHeistSize::TINY)
+	{
+		// StartingScale = TrueSizeForTiny;
+		Machine_SK_Component->SetCollisionEnabled(CurrentSize == EHeistSize::MEDIUM ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+	}
+	
+	// OnPlayerChangeSize(EHeistSize::MEDIUM);
 	
 	RightHandStartTransform = SecondGrabComponent->GetRelativeTransform();
 	LeftHandStartTransform = GrabComponent->GetRelativeTransform();

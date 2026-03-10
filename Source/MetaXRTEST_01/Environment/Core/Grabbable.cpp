@@ -64,8 +64,12 @@ void AGrabbable::ForceRelease()
 	
 	if (GetGrabType() == EGrabTypeBase::TWO_HANDED)
 	{
-		IHeistPlayerInterface::Execute_RightForceRelease(GrabComponent->CurrentMotionControllerHoldingThis->GetOwner());
-		IHeistPlayerInterface::Execute_LeftForceRelease(GrabComponent->CurrentMotionControllerHoldingThis->GetOwner());
+		UHeistMotionControllerComponent* MotionControllerRef = GrabComponent->CurrentMotionControllerHoldingThis;
+		if (MotionControllerRef)
+		{
+			IHeistPlayerInterface::Execute_RightForceRelease(MotionControllerRef->GetOwner());
+			IHeistPlayerInterface::Execute_LeftForceRelease(MotionControllerRef->GetOwner());
+		}
 		return;
 	}
 	

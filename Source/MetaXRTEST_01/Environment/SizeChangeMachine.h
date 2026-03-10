@@ -40,14 +40,32 @@ public:
 	
 	bool IsGrabbableBasedOnBoneHit(const FName BoneHit) const;
 	
-		
+	
+	
 	// Set it explicitly. No Scene Components and Destory.
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Size Change Machine")
 		FVector GetNewPlayerLocationAfterTeleport() const;
 	
 	virtual void OnPlayerChangeSize(EHeistSize NewPlayerSize) override;
+	
+	UFUNCTION()
+		void OnPlayerChangeSize_02(EHeistSize NewPlayerSize);
+	
+	UPROPERTY(EditAnywhere, Category="Size")
+		FVector TrueSizeForTiny;
+	
+	UPROPERTY(EditAnywhere, Category="Size")
+		TObjectPtr<USkeletalMesh> MediumMeshRef;
+	
+	UPROPERTY()
+		USkeletalMesh* StartingMesh;
+	
+	FTransform TeleportTransformDestination;
 
 protected:
+	
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+		TObjectPtr<USoundBase> ChangeSizeSound;
 	
 	virtual void PostInitializeComponents() override;
 	

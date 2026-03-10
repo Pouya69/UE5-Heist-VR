@@ -29,9 +29,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Gameplay | Player Size")
 		FOnPlayerChangeSize OnPlayerChangeSize;
 	
-	UPROPERTY(BlueprintReadWrite, Category="Gameplay | Player")
-		TObjectPtr<APawn> Small_VRCharacterRef;
-	
 	UPROPERTY(BlueprintReadOnly, Category="Gameplay | Player")
 		TObjectPtr<APawn> Normal_VRCharacterRef;
 	
