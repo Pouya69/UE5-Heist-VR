@@ -209,12 +209,14 @@ void ASlidingDoor::BeginPlay()
 	Super::BeginPlay();
 	
 	if (LinkedConstraintActor && LinkedConstraintActor->Implements<UHeistInteractionInterface>())
+	{
 		LinkedConstraintComp = IHeistInteractionInterface::Execute_GetPhysicsConstraintComp(LinkedConstraintActor);
+		
+		BaseMeshComponent->SetSimulatePhysics(false);
+		DoorPhysicsConstraint->BreakConstraint();
+	}
 	
 	InitialDoorLocation = BaseMeshComponent->GetComponentLocation();
-	
-	BaseMeshComponent->SetSimulatePhysics(false);
-	DoorPhysicsConstraint->BreakConstraint();
 }
 
 void ASlidingDoor::PostInitializeComponents()
