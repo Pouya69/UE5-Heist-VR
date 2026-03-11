@@ -38,3 +38,30 @@
 # Content/Main_BuiltData.uasset
 # Content/Main.umap
 Content/Main.umap
+Content/SpaceshipInterior/Maps/Overview_BuiltData.uasset
+Content/SpaceshipInterior/Maps/Overview.umap
+Content/SpaceshipInterior/Maps/Demonstration_BuiltData.uasset
+Content/SpaceshipInterior/Maps/Demonstration.umap
+Content/ModSciInteriors/Maps/Example_Stationary_BuiltData.uasset
+Content/ModSciInteriors/Maps/Example_Stationary.umap
+Content/ModSciInteriors/Maps/Example_Dynamic_BuiltData.uasset
+Content/ModSciInteriors/Maps/Example_Dynamic.umap
+Content/ModSciInteriors/Maps/Example_2_Dynamic_BuiltData.uasset
+Content/ModSciInteriors/Maps/Example_2_Dynamic.umap
+Content/ModSci_EngiProps/Maps/IndividualTemp_2.umap
+Content/ModSci_EngiProps/Maps/IndividualTemp.umap
+Content/ModSci_Engineer/Maps/Overview.umap
+Content/ModSci_Engineer/Maps/Example_Stationary_BuiltData.uasset
+Content/ModSci_Engineer/Maps/Example_Stationary_2_BuiltData.uasset
+Content/ModSci_Engineer/Maps/Example_Stationary_2.umap
+Content/ModSci_Engineer/Maps/Example_Stationary.umap
+Content/ModSci_Engineer/Maps/Example_Dynamic_White.umap
+Content/ModSci_Engineer/Maps/Example_Dynamic_BuiltData.uasset
+Content/ModSci_Engineer/Maps/Example_Dynamic_Blue_BuiltData.uasset
+Content/ModSci_Engineer/Maps/Example_Dynamic_Blue.umap
+Content/ModSci_Engineer/Maps/Example_Dynamic_2.umap
+Content/ModSci_Engineer/Maps/Example_Dynamic.umap
+Content/BigStarStation/Maps/Map_BigStarStation_BuiltData.uasset
+Content/BigStarStation/Maps/Map_BigStarStation.umap
+Content/BigStarStation/Maps/Map_Assets_BuiltData.uasset
+Content/BigStarStation/Maps/Map_Assets.umap
