@@ -87,7 +87,8 @@ void ASlidingDoor::SlideDoorOnPlayerChangeSize(EHeistSize NewPlayerSize)
 
 void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHeistGrabComponent* WhichGrabComponent)
 {
-	IHeistInteractionInterface::Execute_Custom_Tick(LinkedConstraintActor, DeltaTime, nullptr);
+	if (LinkedConstraintComp)
+		IHeistInteractionInterface::Execute_Custom_Tick(LinkedConstraintActor, DeltaTime, nullptr);
 	
 	const FTransform ControllerTransform = WhichGrabComponent->CurrentMotionControllerHoldingThis->GetComponentTransform();
 	UPrimitiveComponent* WhichHandle = WhichGrabComponent == GrabComponent ? FirstHandleMeshComponent : SecondHandleMeshComponent;
