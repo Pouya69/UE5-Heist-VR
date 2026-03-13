@@ -83,6 +83,7 @@ void AHeistLever::ToggleLeverEnabled(const bool bEnabled)
 		// BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		LeverHandleMeshComponent->SetVisibility(true, true);
 		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		LeverLightStatus(false);
 	}
 	else
 	{
@@ -90,7 +91,6 @@ void AHeistLever::ToggleLeverEnabled(const bool bEnabled)
 		LeverHandleMeshComponent->SetVisibility(false, true);
 		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	
 }
 
 void AHeistLever::OnPlayerChangeSize(EHeistSize NewPlayerSize)
@@ -120,6 +120,7 @@ void AHeistLever::Interact_Implementation()
 {
 	IHeistInteractionInterface::Execute_Interact(LinkedActor);
 	
+	LeverLightStatus(true);
 	Execute_SetIsInteractable(this, false);
 	
 }

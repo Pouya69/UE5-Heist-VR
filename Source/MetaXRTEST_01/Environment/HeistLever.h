@@ -29,6 +29,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		bool bIsSetAmount1or2;
 	
+	// For activation of light
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+		void LeverLightStatus(const bool bIsActive);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		float TargetFullRotationPitch;
 	
