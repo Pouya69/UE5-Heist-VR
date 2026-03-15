@@ -15,6 +15,11 @@ class METAXRTEST_01_API ACourierCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	// For things that are controlled in the State Machine and not just Anim Montages or LSQs
+	// By default it should be true for the start for when courier is in hallway door.
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="References")
+		bool bIsInDefaultCutsceneActions;
+	
 	ACourierCharacter();
 	
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="References")
@@ -37,6 +42,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "IK | Player")
 		void SetLookAtPlayerAlpha(float NewAlpha);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Cutscenes")
+		void InterruptedCutscene(const bool bEndCurrentCutscene = false);
+	
+	void InterruptedCutscene_Implementation(const bool bEndCurrentCutscene = false);
 	
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Controller")
 		TObjectPtr<ACourierController> CourierControllerRef;

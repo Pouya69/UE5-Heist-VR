@@ -16,6 +16,9 @@ EBTNodeResult::Type UHeistBTTask_GoBackToCutscene::ExecuteTask(UBehaviorTreeComp
 	
 	ULevelSequencePlayer* CurrentCutsceneRef = Cast<ULevelSequencePlayer>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("Current Cutscene Player Ref"));
 	OwnerComp.GetBlackboardComponent()->ClearValue("Current Cutscene Player Ref");
+	
+	
+	
 	CurrentCutsceneRef->Play();
 	
 	return EBTNodeResult::Succeeded;
