@@ -144,6 +144,7 @@ void AObjectSizeChange::SpitOutGrabbableAfterRelease(AGrabbable* GrabbableToSpit
 		// ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 	}
 	
+	OnChangedSizeOfObject.Broadcast(GrabbableToSpitOut);
 	/*
 	FTimerDelegate Delegate;
 	Delegate.BindLambda([&, GrabbableToSpitOut, LocationAddition]()
@@ -206,6 +207,11 @@ void AObjectSizeChange::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		
 	}
 	*/
+}
+
+void AObjectSizeChange::ForceChangeSizeOfObject(AGrabbable* Grabbable)
+{
+	OtherObjectSizeChangerSide->SpitOutObject(Grabbable);
 }
 
 void AObjectSizeChange::PostInitializeComponents()

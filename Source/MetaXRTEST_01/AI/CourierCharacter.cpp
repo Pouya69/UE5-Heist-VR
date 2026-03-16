@@ -46,8 +46,9 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Is Blocked By Obstacle");
 
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Current Tracking Object");
-	CutsceneAlpha = 0.0f;
-	LookAtPlayerAlpha = 1.0f;
+	
+	// CutsceneAlpha = 0.0f;
+	// LookAtPlayerAlpha = 1.0f;
 	
 	if (bEndCurrentCutscene)
 	{

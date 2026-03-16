@@ -9,12 +9,17 @@ class AGrabbable;
 class USphereComponent;
 enum class EHeistSize : uint8;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangedSizeOfObject, AGrabbable*, GrabbableChanged);
+
 UCLASS()
 class METAXRTEST_01_API AObjectSizeChange : public AActor
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintAssignable, Category="Size Change")
+		FOnChangedSizeOfObject OnChangedSizeOfObject;
+	
 	AObjectSizeChange();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Size Change")
@@ -28,6 +33,10 @@ public:
 	
 	UFUNCTION()
 		void OnPlayerChangeSize(EHeistSize NewPlayerSize);
+	
+	// For cutscenes etc.
+	UFUNCTION(BLueprintCallable, Category="Size Change")
+		void ForceChangeSizeOfObject(AGrabbable* Grabbable);
 	
 protected:
 	UPROPERTY(EditInstanceOnly, Category="Size Change")
