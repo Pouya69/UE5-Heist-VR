@@ -51,12 +51,14 @@ void AHeistLever::PostInitializeComponents()
 	
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
+		/*
 		if (InitialOffRotationPitch > TargetFullRotationPitch)
 		{
 			const float NewInitial = InitialOffRotationPitch;
 			InitialOffRotationPitch = TargetFullRotationPitch;
 			TargetFullRotationPitch = NewInitial;
 		}
+		*/
 		
 		GrabComponent->OnGrabbed.AddDynamic(this, &AHeistLever::OnLeverGrabbed);
 		GrabComponent->OnReleased.AddDynamic(this, &AHeistLever::OnLeverReleased);
@@ -75,21 +77,22 @@ float AHeistLever::GetProgressNormalized() const
 	return (LeverHandleMeshComponent->GetRelativeTransform().Rotator().Pitch - InitialOffRotationPitch) / (TargetFullRotationPitch - InitialOffRotationPitch);
 }
 
-void AHeistLever::ToggleLeverEnabled(const bool bEnabled)
+void AHeistLever::ToggleLeverEnabled(const bool bEnabled, const bool bReset)
 {
+	if (bReset)
+		LeverHandleMeshComponent->SetRelativeRotation(FRotator(InitialOffRotationPitch, 0.0f, 0.0f), false);
 	if (bEnabled)
 	{
-		LeverHandleMeshComponent->SetRelativeRotation(FRotator(InitialOffRotationPitch, 0.0f, 0.0f), false);
 		// BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		LeverHandleMeshComponent->SetVisibility(true, true);
-		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		BaseMeshComponent->SetVisibility(true, true);
+		BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		LeverLightStatus(false);
 	}
 	else
 	{
 		// BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		LeverHandleMeshComponent->SetVisibility(false, true);
-		LeverHandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		BaseMeshComponent->SetVisibility(false, true);
+		BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 
@@ -168,7 +171,8 @@ void AHeistLever::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 	FTransform ControllerTransformRelativeToLeverBase = ControllerTransform.GetRelativeTransform(BaseTransform);
 	
 	const float RotationValueBeforeClamp = ControllerTransformRelativeToLeverBase.GetTranslation().Rotation().Pitch;
-	const float RotationValue = FMath::Clamp(RotationValueBeforeClamp, InitialOffRotationPitch, TargetFullRotationPitch);
+	const float RotationValue = TargetFullRotationPitch < InitialOffRotationPitch ? FMath::Clamp(RotationValueBeforeClamp, TargetFullRotationPitch, InitialOffRotationPitch)
+	: FMath::Clamp(RotationValueBeforeClamp, InitialOffRotationPitch, TargetFullRotationPitch);
 	const FRotator FinalRotation = FRotator(RotationValue, 0, 0);
 	
 	LeverHandleMeshComponent->SetRelativeRotation(FinalRotation);

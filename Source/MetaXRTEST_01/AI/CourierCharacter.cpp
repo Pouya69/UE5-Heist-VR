@@ -47,6 +47,8 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Current Tracking Object");
 	
+	Sprint(false);
+	
 	// CutsceneAlpha = 0.0f;
 	// LookAtPlayerAlpha = 1.0f;
 	
@@ -60,6 +62,11 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 	bIsInDefaultCutsceneActions = false;
 	
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Current Cutscene Player Ref");
+}
+
+void ACourierCharacter::Sprint(const bool bIsSprinting)
+{
+	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? 150.0f : 80.0f;
 }
 
 void ACourierCharacter::FocusOnPlayer(const float NewAlpha)

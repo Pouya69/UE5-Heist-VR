@@ -58,6 +58,9 @@ protected:
 	UPROPERTY(EditInstanceOnly, Category = "Constraints")
 		TObjectPtr<AActor> LinkedConstraintActor;
 	
+	UPROPERTY(EditInstanceOnly, Category = "Constraints")
+		bool bIsJammedDoor;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Constraints")
 		TObjectPtr<UPhysicsConstraintComponent> LinkedConstraintComp;
 	

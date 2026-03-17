@@ -92,6 +92,7 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	
 	const FTransform ControllerTransform = WhichGrabComponent->CurrentMotionControllerHoldingThis->GetComponentTransform();
 	UPrimitiveComponent* WhichHandle = WhichGrabComponent == GrabComponent ? FirstHandleMeshComponent : SecondHandleMeshComponent;
+	// UE_LOG(LogTemp, Warning, TEXT("Handle: %d"), WhichHandle == FirstHandleMeshComponent ? 1 : 2);
 	FTransform HandleTransform = WhichHandle->GetComponentTransform();
 	
 	FTransform ControllerTransformRelativeToHandle = ControllerTransform.GetRelativeTransform(HandleTransform);
@@ -103,14 +104,27 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 		ControllerLocation.Z = 0.0f;
 	}
 	
+	
 	ControllerTransformRelativeToHandle.SetTranslation(ControllerLocation);
 	ControllerTransformRelativeToHandle.SetRotation(HandRotationOffset.Quaternion());
 	
 	FTransform NewControllerTransformRelativeToHandle = ControllerTransformRelativeToHandle * HandleTransform;
 	
 	const FVector Offset = WhichGrabComponent == SecondHandleGrabComponent ? BaseLocationOffsetFromHandle2 : BaseLocationOffsetFromHandle;
-	FVector FinalDoorLocation = NewControllerTransformRelativeToHandle.GetTranslation() - Offset;
+	FVector FinalDoorLocation = NewControllerTransformRelativeToHandle.GetTranslation() + Offset;
+	if (bIsJammedDoor)
+	{
+		FinalDoorLocation.X = InitialDoorLocation.X;
+	}
+	else
+	{
+		FinalDoorLocation.Y = InitialDoorLocation.Y;
+	}
+	
+	FinalDoorLocation.Z = InitialDoorLocation.Z;
+	// UE_LOG(LogTemp, Warning, TEXT("%s"), *FinalDoorLocation.ToCompactString());
 	BaseMeshComponent->SetWorldLocation(FinalDoorLocation, true, nullptr, ETeleportType::TeleportPhysics);
+	
 	
 	HandleTransform = WhichHandle->GetComponentTransform();
 	ControllerTransformRelativeToHandle = ControllerTransform.GetRelativeTransform(HandleTransform);
@@ -139,8 +153,8 @@ void ASlidingDoor::OnHandleGrabbed(UHeistGrabComponent* GrabbedComponent,
 {
 	GrabbedComponent->SetComponentTickEnabled(true);
 	
-	BaseMeshComponent->SetSimulatePhysics(false);
 	DoorPhysicsConstraint->BreakConstraint();
+	BaseMeshComponent->SetSimulatePhysics(false);
 	
 	
 	
@@ -186,6 +200,18 @@ void ASlidingDoor::OnHandleReleased(UHeistGrabComponent* ReleasedComponent,
 		BaseMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, false);
 		FirstHandleMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, false);
 		SecondHandleMeshComponent->IgnoreComponentWhenMoving(MotionControllerRef->PhysicsHandRef, false);
+		
+		FVector Location = BaseMeshComponent->GetComponentLocation();
+		if (bIsJammedDoor)
+		{
+			Location.Y = InitialDoorLocation.Y;
+		}
+		else
+		{
+			Location.X = InitialDoorLocation.X;
+		}
+		Location.Z = InitialDoorLocation.Z;
+		BaseMeshComponent->SetWorldLocation(Location, false, nullptr, ETeleportType::TeleportPhysics);
 	});
 	GetWorldTimerManager().SetTimerForNextTick(Delegate);
 	
@@ -216,8 +242,15 @@ void ASlidingDoor::BeginPlay()
 		BaseMeshComponent->SetSimulatePhysics(false);
 		DoorPhysicsConstraint->BreakConstraint();
 	}
+	else
+	{
+		LinkedConstraintComp = nullptr;
+	}
 	
 	InitialDoorLocation = BaseMeshComponent->GetComponentLocation();
+	
+	BaseLocationOffsetFromHandle = FirstHandleMeshComponent->GetRelativeLocation();
+	BaseLocationOffsetFromHandle2 = SecondHandleMeshComponent->GetRelativeLocation();
 }
 
 void ASlidingDoor::PostInitializeComponents()
@@ -231,9 +264,6 @@ void ASlidingDoor::PostInitializeComponents()
 		GrabComponent->OnReleased.AddDynamic(this, &ASlidingDoor::OnHandleReleased);
 		SecondHandleGrabComponent->OnReleased.AddDynamic(this, &ASlidingDoor::OnHandleReleased);
 		
-		BaseLocationOffsetFromHandle = FirstHandleMeshComponent->GetRelativeLocation();
-		BaseLocationOffsetFromHandle2 = SecondHandleMeshComponent->GetRelativeLocation();
-		
 		AHeistGameMode* GM = Cast<AHeistGameMode>(GetWorld()->GetAuthGameMode());
 		GM->OnPlayerChangeSize.AddDynamic(this, &ASlidingDoor::SlideDoorOnPlayerChangeSize);
 	}
@@ -245,3 +275,4 @@ void ASlidingDoor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+	

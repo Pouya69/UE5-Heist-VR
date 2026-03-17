@@ -48,6 +48,9 @@ public:
 	
 	void InterruptedCutscene_Implementation(const bool bEndCurrentCutscene = false);
 	
+	UFUNCTION(BlueprintCallable, Category="Cutscenes")
+		void Sprint(const bool bIsSprinting = true);
+	
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Controller")
 		TObjectPtr<ACourierController> CourierControllerRef;
 	
