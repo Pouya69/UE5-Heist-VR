@@ -101,7 +101,7 @@ void AHeistButton::OnTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	}
 	
 	if (!bIsPlayer)
-		if (OtherComp->GetMass() < MinimumMass) return;
+		if (OtherComp->GetMass() < MinimumMass && !OtherActor->ActorHasTag("Power")) return;
 	
 	if (OtherActor->Implements<UHeistInteractionInterface>())
 	{
@@ -123,7 +123,7 @@ void AHeistButton::OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent,
 	if (!bIsButtonActive) return;
 	
 	if (!OtherActor->IsA(APawn::StaticClass()))
-		if (OtherComp->GetMass() < MinimumMass) return;
+		if (OtherComp->GetMass() < MinimumMass && !OtherActor->ActorHasTag("Power")) return;
 	
 	TArray<UPrimitiveComponent*> OverlappedComponents;
 	GetOverlappingComponents(OverlappedComponents);

@@ -96,7 +96,7 @@ void ASizeChangeMachine::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	{
 		Machine_SK_Component->SetSkeletalMesh(MediumMeshRef, false);
 		if (NewPlayerSize == EHeistSize::TINY)
-			SetActorScale3D(FVector::OneVector);
+			SetActorScale3D(FVector(1.16f, 1.16f, 1.16f));
 		else
 			SetActorScale3D(StartingScale);
 		// Machine_SK_Component->SetCollisionEnabled(CurrentSize == NewPlayerSize ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);

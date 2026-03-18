@@ -161,6 +161,17 @@ void AObjectSizeChange::SpitOutObject(AGrabbable* GrabbableToSpitOut)
 		return;
 	}
 	
+	ObjectOverlapSphereComponent->SetGenerateOverlapEvents(false);
+	FTimerHandle TimerHandle;
+	FTimerDelegate Delegate1;
+	Delegate1.BindLambda([&]()
+	{
+		ObjectOverlapSphereComponent->SetGenerateOverlapEvents(true);
+		RecentPrimitiveComponent = nullptr;
+	});
+	FTimerHandle Handle;
+	GetWorldTimerManager().SetTimer(Handle, Delegate1, 0.2f, false);
+	
 
 	GrabbableToSpitOut->ForceRelease();
 	
@@ -178,6 +189,7 @@ void AObjectSizeChange::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	
 	if (CurrentSize == EHeistSize::TINY)
 	{
+		ObjectOverlapSphereComponent->SetGenerateOverlapEvents(false);
 		BaseMeshComponent->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 		BaseMeshComponent->SetVisibility(bActive, true);
 	}
@@ -187,11 +199,16 @@ void AObjectSizeChange::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	}
 	
 	ObjectOverlapSphereComponent->SetGenerateOverlapEvents(false);
+	ObjectOverlapSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	FTimerHandle TimerHandle;
 	FTimerDelegate Delegate;
 	Delegate.BindLambda([&, bActive]()
 	{
-		ObjectOverlapSphereComponent->SetGenerateOverlapEvents(bActive);
+		if (bActive)
+		{
+			ObjectOverlapSphereComponent->SetGenerateOverlapEvents(true);
+			ObjectOverlapSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndProbe);
+		}
 		RecentPrimitiveComponent = nullptr;
 	});
 	GetWorldTimerManager().SetTimer(TimerHandle, Delegate, 0.2f, false);
@@ -249,6 +266,7 @@ void AObjectSizeChange::OnObjectEnteredVaccum(UPrimitiveComponent* OverlappedCom
 	GetWorldTimerManager().SetTimer(TimerHandle, Delegate, 0.2f, false);
 	
 	if (!RecentGrabbable || !RecentGrabbable->bCanChangeSize || RecentGrabbable->CurrentSize == OtherObjectSizeChangerSide->CurrentSize) return;
+	RecentPrimitiveComponent = OtherComp;
 	UPrimitiveComponent* ObjectPrimitiveComp = RecentGrabbable->GetMainPrimitiveComponent();
 	if (ObjectPrimitiveComp->GetComponentVelocity().GetSafeNormal().Dot(UKismetMathLibrary::GetUpVector(SpitOutTransform.Rotator())) >= 0.97f)
 	{
