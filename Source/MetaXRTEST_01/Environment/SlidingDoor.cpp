@@ -114,11 +114,12 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	FVector FinalDoorLocation = NewControllerTransformRelativeToHandle.GetTranslation() + Offset;
 	if (bIsJammedDoor)
 	{
-		FinalDoorLocation.X = InitialDoorLocation.X;
+		FinalDoorLocation.Y = InitialDoorLocation.Y;
+		
 	}
 	else
 	{
-		FinalDoorLocation.Y = InitialDoorLocation.Y;
+		FinalDoorLocation.X = InitialDoorLocation.X;
 	}
 	
 	FinalDoorLocation.Z = InitialDoorLocation.Z;
