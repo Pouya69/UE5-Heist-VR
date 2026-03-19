@@ -115,7 +115,6 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	if (bIsJammedDoor)
 	{
 		FinalDoorLocation.Y = InitialDoorLocation.Y;
-		
 	}
 	else
 	{

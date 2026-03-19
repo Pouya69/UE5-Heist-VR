@@ -30,7 +30,8 @@ void UHeistBTService_CheckForObstacles::TickNode(UBehaviorTreeComponent& OwnerCo
 	CollisionParams.AddIgnoredActor(CourierCharacterRef);
 	
 	const bool bIsBlocked = GetWorld()->SweepSingleByObjectType(HitResult, Start, End, FQuat::Identity,
-		ALWAYS_COLLIDING_PHYSICS_ACTOR_CHANNEL, FCollisionShape::MakeSphere(ObstacleCheckRadius), CollisionParams);
+	ALWAYS_COLLIDING_PHYSICS_ACTOR_CHANNEL, FCollisionShape::MakeSphere(ObstacleCheckRadius), CollisionParams) || (GetWorld()->SweepSingleByObjectType(HitResult, Start, End, FQuat::Identity,
+	ECC_Vehicle, FCollisionShape::MakeSphere(ObstacleCheckRadius), CollisionParams) && HitResult.GetActor()->ActorHasTag("Jammed Door"));
 	
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool(IsBlockedByObstacleKey.SelectedKeyName, bIsBlocked);
 	

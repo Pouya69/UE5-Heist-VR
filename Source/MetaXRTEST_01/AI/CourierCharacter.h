@@ -3,14 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/HeistInteractionInterface.h"
 #include "GameFramework/Character.h"
 #include "CourierCharacter.generated.h"
 
+class ALevelSequenceActor;
 class ACourierController;
 class UMotionWarpingComponent;
 
 UCLASS()
-class METAXRTEST_01_API ACourierCharacter : public ACharacter
+class METAXRTEST_01_API ACourierCharacter : public ACharacter, public IHeistInteractionInterface
 {
 	GENERATED_BODY()
 
@@ -46,6 +48,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Cutscenes")
 		void InterruptedCutscene(const bool bEndCurrentCutscene = false);
 	
+	UPROPERTY(BlueprintReadWrite, Category="Cutscenes")
+		ALevelSequenceActor* CurrentCutscenePlaying;
+	
 	void InterruptedCutscene_Implementation(const bool bEndCurrentCutscene = false);
 	
 	UFUNCTION(BlueprintCallable, Category="Cutscenes")
@@ -66,8 +71,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Obstacle")
 		void AttackObstacle();
 	
+	UPROPERTY(BlueprintReadWrite, Category="Size")
+		EHeistSize CurrentSize;
 	
 protected:
+	
+	virtual void ObjectSlowedDown_Implementation() override;
+	virtual void ObjectOutOfSlowMotion_Implementation() override;
+	virtual bool IsGrabbable_Implementation(const FName BoneHit) const override;
+	virtual bool IsRemoteGrabbable_Implementation() const override;
+	virtual EHeistSize GetCurrentSizeOfGameObject_Implementation() override;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 		TObjectPtr<UMotionWarpingComponent> MotionWarpComponent;

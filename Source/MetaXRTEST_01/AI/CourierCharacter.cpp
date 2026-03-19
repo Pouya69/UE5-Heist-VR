@@ -3,6 +3,7 @@
 #include "CourierCharacter.h"
 
 #include "CourierController.h"
+#include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
 #include "Core/HeistTypes.h"
 #include "Kismet/GameplayStatics.h"
@@ -25,6 +26,8 @@ ACourierCharacter::ACourierCharacter()
 	MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpComp");
 	
 	bIsInDefaultCutsceneActions = true;
+	
+	CurrentSize = EHeistSize::MEDIUM;
 }
 
 void ACourierCharacter::SetCutsceneAlpha(float NewAlpha)
@@ -39,7 +42,7 @@ void ACourierCharacter::SetLookAtPlayerAlpha(float NewAlpha)
 
 void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurrentCutscene)
 {
-	// GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	
 	CourierControllerRef->GetBlackboardComponent()->SetValueAsBool("Is In Cutscene", true);
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Is Moving To Destination");
@@ -49,11 +52,13 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 	
 	Sprint(false);
 	
-	// CutsceneAlpha = 0.0f;
+	CutsceneAlpha = 0.0f;
 	// LookAtPlayerAlpha = 1.0f;
+	
 	
 	if (bEndCurrentCutscene)
 	{
+		CurrentCutscenePlaying = nullptr;
 		ULevelSequencePlayer* CurrentCutsceneRef = Cast<ULevelSequencePlayer>(CourierControllerRef->GetBlackboardComponent()->GetValueAsObject("Current Cutscene Player Ref"));
 		if (CurrentCutsceneRef)
 			CurrentCutsceneRef->Stop();
@@ -66,7 +71,7 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 
 void ACourierCharacter::Sprint(const bool bIsSprinting)
 {
-	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? 150.0f : 80.0f;
+	GetCharacterMovement()->MaxWalkSpeed = (bIsSprinting ? 150.0f : 80.0f) * (CurrentSize == EHeistSize::TINY ? MEDIUM_SIZE_MULT : TINY_SIZE_MULT);
 }
 
 void ACourierCharacter::FocusOnPlayer(const float NewAlpha)
@@ -102,6 +107,47 @@ void ACourierCharacter::AttackObstacle()
 	HitResult.GetComponent()->AddImpulseAtLocation(-HitResult.ImpactNormal * ObstaclePushAwayForce, HitResult.ImpactPoint);
 }
 
+void ACourierCharacter::ObjectSlowedDown_Implementation()
+{
+	if (CurrentCutscenePlaying && CurrentCutscenePlaying->GetSequencePlayer()->IsPlaying())
+	{
+		// Slow down the cutscene only.
+		CurrentCutscenePlaying->GetSequencePlayer()->SetPlayRate(0.1f);
+	}
+	else
+	{
+		// Not in cutscene.
+	}
+}
+
+void ACourierCharacter::ObjectOutOfSlowMotion_Implementation()
+{
+	if (CurrentCutscenePlaying && CurrentCutscenePlaying->GetSequencePlayer()->IsPlaying())
+	{
+		// Slow down the cutscene only.
+		CurrentCutscenePlaying->GetSequencePlayer()->SetPlayRate(1.0f);
+	}
+	else
+	{
+		// Not in cutscene.
+	}
+}
+
+bool ACourierCharacter::IsGrabbable_Implementation(const FName BoneHit) const
+{
+	return false;
+}
+
+bool ACourierCharacter::IsRemoteGrabbable_Implementation() const
+{
+	return false;
+}
+
+EHeistSize ACourierCharacter::GetCurrentSizeOfGameObject_Implementation()
+{
+	return CurrentSize;
+}
+
 void ACourierCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -124,4 +170,12 @@ void ACourierCharacter::BeginPlay()
 void ACourierCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (CurrentSize != EHeistSize::TINY || !GetCharacterMovement()->IsFalling()) return;
+	
+	FVector MyVelocity = GetCharacterMovement()->Velocity;
+	MyVelocity.Z -= 980000.0f;
+	// UE_LOG(LogTemp, Warning, TEXT("Move Velocity: %f"), MyVelocity.Z);
+	
+	GetCharacterMovement()->Velocity = MyVelocity;
+	
 }

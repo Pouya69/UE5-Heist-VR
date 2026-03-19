@@ -29,6 +29,9 @@ void AHeistGameMode::ChangePlayerSize_Implementation(EHeistSize NewPlayerSize)
 		case EHeistSize::TINY:
 			break;
 	}
+	
+	
+	
 	OnPlayerChangeSize.Broadcast(NewPlayerSize);
 	
 }

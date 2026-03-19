@@ -3,7 +3,9 @@
 
 #include "HeistBTTask_GoBackToCutscene.h"
 
+#include "AIController.h"
 #include "LevelSequencePlayer.h"
+#include "AI/CourierCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 EBTNodeResult::Type UHeistBTTask_GoBackToCutscene::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -17,7 +19,8 @@ EBTNodeResult::Type UHeistBTTask_GoBackToCutscene::ExecuteTask(UBehaviorTreeComp
 	ULevelSequencePlayer* CurrentCutsceneRef = Cast<ULevelSequencePlayer>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("Current Cutscene Player Ref"));
 	OwnerComp.GetBlackboardComponent()->ClearValue("Current Cutscene Player Ref");
 	
-	
+	ACourierCharacter* Courier = CastChecked<ACourierCharacter>(OwnerComp.GetAIOwner()->GetPawn());
+	Courier->Sprint(false);
 	
 	CurrentCutsceneRef->Play();
 	
