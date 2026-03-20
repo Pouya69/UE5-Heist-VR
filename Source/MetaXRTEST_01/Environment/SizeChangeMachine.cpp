@@ -91,7 +91,7 @@ bool ASizeChangeMachine::IsGrabbable_Implementation(const FName BoneHit) const
 void ASizeChangeMachine::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 {
 	Super::OnPlayerChangeSize(NewPlayerSize);
-	
+	Machine_SK_Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (CurrentSize == EHeistSize::TINY)
 	{
 		Machine_SK_Component->SetSkeletalMesh(MediumMeshRef, false);
@@ -107,9 +107,19 @@ void ASizeChangeMachine::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		// SetActorScale3D(StartingScale);
 		// SetActorScale3D(TrueSizeForTiny);
 	}
-	Machine_SK_Component->SetCollisionEnabled(CurrentSize == NewPlayerSize ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
-	LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
-	RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
+	
+	FTimerDelegate Delegate;
+	Delegate.BindLambda([&, NewPlayerSize]()
+	{
+		if (CurrentSize == NewPlayerSize)
+		{
+			Machine_SK_Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		LeftHandFinalLocation = LeftHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
+		RightHandFinalLocation = RightHandMovementSplineComponent->GetLocationAtTime(0.0f, ESplineCoordinateSpace::World, true);
+	});
+	
+	GetWorldTimerManager().SetTimerForNextTick(Delegate);
 	
 	
 }
