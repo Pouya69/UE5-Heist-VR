@@ -399,7 +399,7 @@ void AHeistWheel::PostInitializeComponents()
 	}
 }
 
-void AHeistWheel::AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo)
+void AHeistWheel::AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo, FVector Offset)
 {
 	ForceRelease();
 	FTimerDelegate TimerDelegate;

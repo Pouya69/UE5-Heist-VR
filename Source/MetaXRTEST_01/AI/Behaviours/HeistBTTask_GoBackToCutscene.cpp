@@ -12,6 +12,7 @@ EBTNodeResult::Type UHeistBTTask_GoBackToCutscene::ExecuteTask(UBehaviorTreeComp
 {
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool("Is In Cutscene", true);
 	OwnerComp.GetBlackboardComponent()->ClearValue("Is Moving To Destination");
+	OwnerComp.GetBlackboardComponent()->ClearValue("Target Destination Actor");
 	OwnerComp.GetBlackboardComponent()->ClearValue("Is Blocked By Obstacle");
 
 	OwnerComp.GetBlackboardComponent()->ClearValue("Current Tracking Object");

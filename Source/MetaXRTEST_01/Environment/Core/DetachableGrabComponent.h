@@ -18,7 +18,7 @@ public:
 	// Sets default values for this component's properties
 	UDetachableGrabComponent();
 	
-	void AttachToAnchorPoint(AGrabbable* OwnerGrabbable, USceneComponent* NewAnchorToAttachTo, UHeistMotionControllerComponent* MotionController);
+	void AttachToAnchorPoint(AGrabbable* OwnerGrabbable, USceneComponent* NewAnchorToAttachTo, UHeistMotionControllerComponent* MotionController, FVector Offset = FVector::ZeroVector);
 
 protected:
 	// Called when the game starts

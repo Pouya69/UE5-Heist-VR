@@ -82,6 +82,9 @@ protected:
 	virtual bool IsRemoteGrabbable_Implementation() const override;
 	virtual EHeistSize GetCurrentSizeOfGameObject_Implementation() override;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Movement")
+		float BaseMovementSpeed;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 		TObjectPtr<UMotionWarpingComponent> MotionWarpComponent;
 	

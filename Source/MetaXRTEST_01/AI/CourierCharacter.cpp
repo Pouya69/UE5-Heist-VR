@@ -47,6 +47,7 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 	CourierControllerRef->GetBlackboardComponent()->SetValueAsBool("Is In Cutscene", true);
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Is Moving To Destination");
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Is Blocked By Obstacle");
+	CourierControllerRef->GetBlackboardComponent()->ClearValue("Target Destination Actor");
 
 	CourierControllerRef->GetBlackboardComponent()->ClearValue("Current Tracking Object");
 	
@@ -71,7 +72,9 @@ void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurren
 
 void ACourierCharacter::Sprint(const bool bIsSprinting)
 {
-	GetCharacterMovement()->MaxWalkSpeed = (bIsSprinting ? 150.0f : 80.0f) * (CurrentSize == EHeistSize::TINY ? MEDIUM_SIZE_MULT : TINY_SIZE_MULT);
+	BaseMovementSpeed = (bIsSprinting ? 150.0f : 80.0f);
+	
+	GetCharacterMovement()->MaxWalkSpeed = BaseMovementSpeed * (CurrentSize == EHeistSize::TINY ? MEDIUM_SIZE_MULT : 1.0f);
 }
 
 void ACourierCharacter::FocusOnPlayer(const float NewAlpha)
@@ -155,6 +158,7 @@ void ACourierCharacter::PostInitializeComponents()
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
 		CourierControllerRef = Cast<ACourierController>(GetController());
+		BaseMovementSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	}
 }
 
