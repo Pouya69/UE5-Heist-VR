@@ -1,3 +1,28 @@
+Audio & Sound Design Credits
+
+Sonniss. (2026). GameAudioGDC bundle. https://sonniss.com/gameaudiogdc
+
+Sound Ideas. (n.d.). General sound effects library. https://soundideas.sourceaudio.com/
+
+Pixabay. (n.d.). Royalty-free sound effects. https://pixabay.com/sound-effects/
+
+Freesound. (n.d.). Freesound database. https://freesound.org/
+
+Tools Used
+Produced using REAPER and Ableton Live
+
+
+
+Common, S. (2020). Sci-fi portal gateway. Sketchfab. https://sketchfab.com/3d-models/sci-fi-portal-gateway-58d2570e88c642bba8ef92f3175391cf
+
+Engelsman, T. (2021). Low poly exhaust fan with motor. Sketchfab. https://sketchfab.com/3d-models/low-poly-exhaust-fan-with-motor-dc2468a471164a618cee7d4f3f7db5dd
+
+Kreativ-Inertia. (2022). Sci-fi power lever game asset. Sketchfab. https://sketchfab.com/3d-models/sci-fi-power-lever-game-asset-b2325d59798043faa152ed6176e12fe2
+
+The_Sly_Fox. (2023). Mining trolley. Sketchfab. https://sketchfab.com/3d-models/mining-trolley-3912b1c58fab411f8f5d1f12efb4fa3a
+
+Yadira. (2022). Button modeling practice yadira. Sketchfab. https://sketchfab.com/3d-models/button-modeling-practice-yadira-4e50ed39d554418bb09f827f5f15d388
+
 Paper Airplane: "Paper Plane" (https://skfb.ly/pCOK8) by Jazmin_BeamNG_Lover is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 Dice: https://www.cgtrader.com/designers/aaakunkun?utm_source=credit&utm_source=credit_item_page
 Table: https://www.cgtrader.com/designers/cratial3d?utm_source=credit&utm_source=credit_item_page
