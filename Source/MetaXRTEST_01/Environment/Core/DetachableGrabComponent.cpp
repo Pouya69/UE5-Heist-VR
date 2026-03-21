@@ -72,7 +72,7 @@ bool UDetachableGrabComponent::DetachWhenTooFarFromGrabbable()
 	*/
 }
 
-void UDetachableGrabComponent::AttachToAnchorPoint(AGrabbable* OwnerGrabbable, USceneComponent* NewAnchorToAttachTo, UHeistMotionControllerComponent* ControllerRef, FVector Offset)
+void UDetachableGrabComponent::AttachToAnchorPoint(AGrabbable* OwnerGrabbable, USceneComponent* NewAnchorToAttachTo, UHeistMotionControllerComponent* ControllerRef)
 {
 	if (AHeistWheel* WheelOwner = Cast<AHeistWheel>(GetOwner()))
 	{
@@ -90,8 +90,7 @@ void UDetachableGrabComponent::AttachToAnchorPoint(AGrabbable* OwnerGrabbable, U
 		WheelOwner->WheelMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 		WheelOwner->HandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 
-		OwnerGrabbable->AttachToComponent(NewAnchorToAttachTo, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false));
-		OwnerGrabbable->SetActorLocation(Offset);
+		OwnerGrabbable->AttachToComponent(NewAnchorToAttachTo, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false));;
 	}
 	
 	

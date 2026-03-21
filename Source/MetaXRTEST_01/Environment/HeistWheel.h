@@ -20,7 +20,7 @@ public:
 		TObjectPtr<AActor> LinkedActor;
 	
 	UFUNCTION(BlueprintCallable, Category="Linked Object")
-		void AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo, FVector Offset = FVector(0.0f, 0.0f, 0.0f));
+		void AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo);
 	
 	// For when it is attached to a new point etc.
 	UFUNCTION(BlueprintCallable, Category="Linked Object")
