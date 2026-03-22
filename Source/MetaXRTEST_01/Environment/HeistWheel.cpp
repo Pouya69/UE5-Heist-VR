@@ -3,6 +3,7 @@
 
 #include "HeistWheel.h"
 
+#include "Components/AudioComponent.h"
 #include "Core/DetachableGrabComponent.h"
 #include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
@@ -51,6 +52,9 @@ AHeistWheel::AHeistWheel()
 	
 	bIsHandRotationFixed = false;
 	bIsSetAmount1or2 = false;
+	
+	ValveAudioComponent = CreateDefaultSubobject<UAudioComponent>("ValveAudioComp");
+	ValveAudioComponent->SetupAttachment(BaseMeshComponent);
 }
 
 void AHeistWheel::ChangeLinkedActor(AActor* NewLinkedActor)
@@ -149,8 +153,10 @@ UPrimitiveComponent* AHeistWheel::GetMainPrimitiveComponent() const
 
 void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 {
-	Super::OnPlayerChangeSize(NewPlayerSize);
+	if (LinkedActor)
+		bIsRemoteGrabbable = false;
 	
+	Super::OnPlayerChangeSize(NewPlayerSize);
 	const bool bActive = CurrentSize == NewPlayerSize;
 	BaseMeshComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
 	BaseMeshComponent->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
@@ -172,6 +178,13 @@ void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		}
 	}
 	BaseMeshComponent->SetVisibility(bActive, true);
+	
+	if (LinkedActor)
+	{
+		HandleMeshComponent->SetSimulatePhysics(false);
+		BaseMeshComponent->SetSimulatePhysics(false);
+		WheelMeshComponent->SetSimulatePhysics(false);
+	}
 }
 
 void AHeistWheel::Interact_Implementation()
@@ -238,7 +251,6 @@ void AHeistWheel::Tick(float DeltaTime)
 	// 
 	
 	
-	
 	switch (LeverInteractionType)
 	{
 	case EHeistObjectInteractionType::CONTINUOUS_ONLY:
@@ -301,6 +313,7 @@ void AHeistWheel::Tick(float DeltaTime)
 		if (!bIsBeingHeld && !CVarWheelTest.GetValueOnGameThread())
 		{
 			SetActorTickEnabled(false);
+			ValveAudioComponent->SetBoolParameter("OnTurnStop", true);
 			GrabComponent->SetComponentTickEnabled(false);
 		}
 		
@@ -330,6 +343,7 @@ void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 	GrabComponent->SetComponentTickEnabled(true);
 	
 	IHeistInteractionInterface::Execute_SetIsInFocus(LinkedActor, true);
+	ValveAudioComponent->SetBoolParameter("OnTurnStart", true);
 	
 	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)
@@ -368,6 +382,7 @@ void AHeistWheel::PostInitializeComponents()
 	
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
+		ValveAudioComponent->Play();
 		const bool bIsTiny = CurrentSize == EHeistSize::TINY;
 		if (!LinkedActor)
 		{
@@ -401,6 +416,7 @@ void AHeistWheel::PostInitializeComponents()
 
 void AHeistWheel::AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo)
 {
+	bIsRemoteGrabbable = false;
 	ForceRelease();
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindLambda([&, NewAnchorToAttachTo]()
@@ -410,6 +426,9 @@ void AHeistWheel::AttachToNewAnchorPoint(USceneComponent* NewAnchorToAttachTo)
 		WheelMeshComponent->SetSimulatePhysics(false);
 		bIsRemoteGrabbable = false;
 		CastChecked<UDetachableGrabComponent>(GrabComponent)->AttachToAnchorPoint(this, NewAnchorToAttachTo, GrabComponent->CurrentMotionControllerHoldingThis);
+		HandleMeshComponent->SetSimulatePhysics(false);
+		BaseMeshComponent->SetSimulatePhysics(false);
+		WheelMeshComponent->SetSimulatePhysics(false);
 	});
 	GetWorldTimerManager().SetTimerForNextTick(TimerDelegate);
 

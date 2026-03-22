@@ -222,7 +222,7 @@ void ASizeChangeMachine::OnHandleGrabbed(UHeistGrabComponent* GrabbedComponent,
 	{
 		IHeistPlayerInterface::Execute_SetupBonePhysicsAndWeightRightHand_CPP(MotionControllerRef->GetOwner(), "hand_r", false, false);
 	}
-	
+	Machine_SK_Component->Activate();
 	SetActorTickEnabled(true);
 }
 
@@ -381,6 +381,7 @@ void ASizeChangeMachine::Tick(float DeltaTime)
 	if (!bIsTestingProgressSpline && !bIsRightGrabbed && !bIsLeftGrabbed && FMath::IsNearlyZero(RightSplineNormalizeProgress) && FMath::IsNearlyZero(LeftSplineNormalizeProgress))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Size Machine disabling..."));
+		Machine_SK_Component->Deactivate();
 		SetActorTickEnabled(false);
 		return;
 	}

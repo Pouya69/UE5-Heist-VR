@@ -133,7 +133,7 @@ void AObjectSizeChange::SpitOutGrabbableAfterRelease(AGrabbable* GrabbableToSpit
 			FTimerDelegate Delegate;
 			Delegate.BindLambda([&, GrabbableToSpitOut, ObjectPrimitiveComp, NewObjectVelocity, LocationAddition]()
 			{
-				ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity / 5000.0f);
+				ObjectPrimitiveComp->SetPhysicsLinearVelocity(NewObjectVelocity / 2.0f);
 				ObjectPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 			});
 			GetWorldTimerManager().SetTimerForNextTick(Delegate);
@@ -274,6 +274,8 @@ void AObjectSizeChange::OnObjectEnteredVaccum(UPrimitiveComponent* OverlappedCom
 		return;
 	}
 	
+	if (OtherObjectSizeChangerSide->CurrentSize == RecentGrabbable->CurrentSize) return;
 	
+	UGameplayStatics::PlaySoundAtLocation(this, PortalSound, SpitOutTransform.GetTranslation());
 	OtherObjectSizeChangerSide->SpitOutObject(RecentGrabbable);
 }

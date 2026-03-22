@@ -95,6 +95,10 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	// UE_LOG(LogTemp, Warning, TEXT("Handle: %d"), WhichHandle == FirstHandleMeshComponent ? 1 : 2);
 	FTransform HandleTransform = WhichHandle->GetComponentTransform();
 	
+		
+	const bool bIsFirstHandle = WhichHandle == FirstHandleMeshComponent;
+	const bool bIsLeftHand = WhichGrabComponent->CurrentMotionControllerHoldingThis->MotionSource.IsEqual("Left");
+	
 	FTransform ControllerTransformRelativeToHandle = ControllerTransform.GetRelativeTransform(HandleTransform);
 	FVector ControllerLocation = ControllerTransformRelativeToHandle.GetTranslation();
 	ControllerLocation.Y = 0.0f;
@@ -110,8 +114,14 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	
 	FTransform NewControllerTransformRelativeToHandle = ControllerTransformRelativeToHandle * HandleTransform;
 	
-	const FVector Offset = WhichGrabComponent == SecondHandleGrabComponent ? BaseLocationOffsetFromHandle2 : BaseLocationOffsetFromHandle;
+	FVector Offset = bIsFirstHandle ? BaseLocationOffsetFromHandle : BaseLocationOffsetFromHandle2;
+	if (bIsJammedDoor)
+	{
+		Offset.X *= 4.0f * (bIsFirstHandle ? 1.0f : -1.0f);
+	}
+	UE_LOG(LogTemp, Log, TEXT("%s"), *Offset.ToCompactString());
 	FVector FinalDoorLocation = NewControllerTransformRelativeToHandle.GetTranslation() + Offset;
+	
 	if (bIsJammedDoor)
 	{
 		FinalDoorLocation.Y = InitialDoorLocation.Y;
@@ -133,8 +143,17 @@ void ASlidingDoor::Custom_Tick_Implementation(const float& DeltaTime, const UHei
 	ControllerLocation.X = 0.0f;
 	ControllerLocation.Z = 0.0f;
 	
-	ControllerTransformRelativeToHandle.SetTranslation(ControllerLocation + HandLocationOffset);
-	ControllerTransformRelativeToHandle.SetRotation(HandRotationOffset.Quaternion());
+	FVector FinalHandLocation = HandLocationOffset;
+	if (bIsFirstHandle)
+		FinalHandLocation.Z *= -1.0f;
+	if (!bIsLeftHand)
+		FinalHandLocation.Z *= -1.0f;
+	
+	ControllerTransformRelativeToHandle.SetTranslation(FinalHandLocation + ControllerLocation);
+	
+	const FRotator FinalHandRotation = HandRotationOffset + (bIsFirstHandle ? FRotator::ZeroRotator : FRotator(180, 0, 0)) + 
+		(bIsLeftHand ? FRotator(180, 0, 0) : FRotator::ZeroRotator);
+	ControllerTransformRelativeToHandle.SetRotation(FinalHandRotation.Quaternion());
 	ControllerTransformRelativeToHandle = ControllerTransformRelativeToHandle * HandleTransform;
 	
 	WhichGrabComponent->CurrentMotionControllerHoldingThis->PhysicsHandRef->SetWorldLocationAndRotation(ControllerTransformRelativeToHandle.GetTranslation(), ControllerTransformRelativeToHandle.GetRotation(),

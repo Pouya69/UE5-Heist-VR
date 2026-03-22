@@ -88,21 +88,24 @@ bool UHeistFunctionLibrary::SetTimeDilationOfObject(FTimerHandle& OutTimeDilatio
 		FTimerDelegate Delegate;
 		Delegate.BindLambda([ObjectPrimComp, Duration, ObjectToAffect, ObjectBodyInstance, DilationAmount, CharacterToAffect, PreviousDilation]()
 		{
-			ObjectToAffect->CustomTimeDilation = 1.0f;
-
-			const float NewDilation = 1 / DilationAmount;
-			if (!CharacterToAffect && ObjectPrimComp && ObjectPrimComp->IsSimulatingPhysics())
+			// Just in case multiple
+			if (!FMath::IsNearlyEqual(ObjectToAffect->CustomTimeDilation, 1.0f, 0.01f))
 			{
-				ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * NewDilation, false);
-				ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * NewDilation, false);
-				ObjectBodyInstance->SetMassScale(ObjectBodyInstance->MassScale * DilationAmount);
-				ObjectBodyInstance->SetEnableGravity(true);
+				ObjectToAffect->CustomTimeDilation = 1.0f;
+
+				const float NewDilation = 1 / DilationAmount;
+				if (!CharacterToAffect && ObjectPrimComp && ObjectPrimComp->IsSimulatingPhysics())
+				{
+					ObjectBodyInstance->SetLinearVelocity(ObjectBodyInstance->GetUnrealWorldVelocity() * NewDilation, false);
+					ObjectBodyInstance->SetAngularVelocityInRadians(ObjectBodyInstance->GetUnrealWorldAngularVelocityInRadians() * NewDilation, false);
+					ObjectBodyInstance->SetMassScale(ObjectBodyInstance->MassScale * DilationAmount);
+					ObjectBodyInstance->SetEnableGravity(true);
+				}
+				
+				if (ObjectToAffect->Implements<UHeistInteractionInterface>())
+					IHeistInteractionInterface::Execute_ObjectOutOfSlowMotion(ObjectToAffect);
 			}
-			
-			if (ObjectToAffect->Implements<UHeistInteractionInterface>())
-				IHeistInteractionInterface::Execute_ObjectOutOfSlowMotion(ObjectToAffect);
 		});
-		
 		ObjectWorld->GetTimerManager().SetTimer(OutTimeDilationTimerHandle, Delegate, Duration, false);
 		OutTimeDilationTimerHandle = NewGlobalTimeDilationTimerHandle;
 	}
