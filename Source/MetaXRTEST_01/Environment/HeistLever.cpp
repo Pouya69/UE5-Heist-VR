@@ -189,9 +189,12 @@ void AHeistLever::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 	ControllerTransformRelativeToLeverBase.SetRotation(HandRotationOffset.Quaternion());
 	ControllerTransformRelativeToLeverBase.SetTranslation(HandLocation + HandLocationOffset);
 	
+	FVector Offset = LeverHandleMeshComponent->GetForwardVector() * HandLocationOffset_FromLeverForward;
+	Offset += LeverHandleMeshComponent->GetUpVector() * HandLocationOffset.Z;
+	
 	ControllerTransformRelativeToLeverBase = ControllerTransformRelativeToLeverBase * LeverTransform;
 	
-	MotionControllerRef->PhysicsHandRef->SetWorldLocationAndRotation(LeverTransform.GetTranslation() + (LeverHandleMeshComponent->GetForwardVector() * HandLocationOffset_FromLeverForward)
+	MotionControllerRef->PhysicsHandRef->SetWorldLocationAndRotation(LeverTransform.GetTranslation() + Offset
 		, ControllerTransformRelativeToLeverBase.GetRotation().Rotator(), false, nullptr, ETeleportType::ResetPhysics);
 }
 

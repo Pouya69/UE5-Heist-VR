@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		bool bIsSetAmount1or2;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
+		TObjectPtr<UAudioComponent> ValveAudioComponent;
+	
 	// 0 is not turned at all, 1 is full turned. (InitialOffRotationRoll -> TargetFullRotationRoll)
 	UFUNCTION(BlueprintCallable, Category="Progress")
 		float GetProgressNormalized() const;

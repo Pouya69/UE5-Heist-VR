@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Size Change")
 		void SpitOutObject(AGrabbable* GrabbableToSpitOut);
 	
+	UPROPERTY(EditDefaultsOnly, Category="Size Change")
+		TObjectPtr<USoundBase> PortalSound;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Size Change")
 		FTransform SpitOutTransform;
 	
