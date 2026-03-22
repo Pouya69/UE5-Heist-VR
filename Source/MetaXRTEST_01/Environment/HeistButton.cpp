@@ -3,6 +3,7 @@
 
 #include "HeistButton.h"
 
+#include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "Core/HeistGameMode.h"
 #include "Core/HeistTypes.h"
@@ -34,6 +35,9 @@ AHeistButton::AHeistButton()
 	TriggerSphereOverlapComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ButtonTriggerComp"));
 	TriggerSphereOverlapComponent->SetCollisionProfileName("Button_Trigger");
 	TriggerSphereOverlapComponent->SetupAttachment(ButtonBaseMeshComponent);
+	
+	ButtonAudioComponent = CreateDefaultSubobject<UAudioComponent>("ButtonAudioComp");
+	ButtonAudioComponent->SetupAttachment(ButtonBaseMeshComponent);
 	
 	bIsPowered = true;
 	MinimumMass = -1.0f;
@@ -86,6 +90,8 @@ void AHeistButton::Interact_Implementation()
 {
 	if (LinkedActor)
 		Execute_Interact(LinkedActor);
+	
+	ButtonAudioComponent->Play();
 }
 
 void AHeistButton::OnTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

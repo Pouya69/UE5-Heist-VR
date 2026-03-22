@@ -3,6 +3,7 @@
 
 #include "HeistLever.h"
 
+#include "Components/AudioComponent.h"
 #include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
 #include "Player/HeistMotionControllerComponent.h"
@@ -26,6 +27,9 @@ AHeistLever::AHeistLever()
 	GrabComponent->InitializeGrabComponent(LeverHandleMeshComponent, true);
 	GrabComponent->GrabTypeBase = EGrabTypeBase::CUSTOM;
 	GrabComponent->SetSimulateOnDrop(false);
+	
+	LeverAudioComponent = CreateDefaultSubobject<UAudioComponent>("LeverAudioComp");
+	LeverAudioComponent->SetupAttachment(BaseMeshComponent);
 	
 	InitialOffRotationPitch = 20.0f;
 	TargetFullRotationPitch = 60.0f;
@@ -51,6 +55,7 @@ void AHeistLever::PostInitializeComponents()
 	
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
+		LeverAudioComponent->Play();
 		/*
 		if (InitialOffRotationPitch > TargetFullRotationPitch)
 		{
@@ -74,6 +79,9 @@ void AHeistLever::PostInitializeComponents()
 
 float AHeistLever::GetProgressNormalized() const
 {
+	if (TargetFullRotationPitch < InitialOffRotationPitch)
+		return (LeverHandleMeshComponent->GetRelativeTransform().Rotator().Pitch - InitialOffRotationPitch) / (TargetFullRotationPitch - InitialOffRotationPitch);
+	
 	return (LeverHandleMeshComponent->GetRelativeTransform().Rotator().Pitch - InitialOffRotationPitch) / (TargetFullRotationPitch - InitialOffRotationPitch);
 }
 
@@ -125,6 +133,8 @@ void AHeistLever::Interact_Implementation()
 	
 	LeverLightStatus(true);
 	Execute_SetIsInteractable(this, false);
+	
+	LeverAudioComponent->SetBoolParameter("Play_LeverDown", true);
 	
 }
 
@@ -264,9 +274,9 @@ void AHeistLever::Tick(float DeltaTime)
 		if (!bIsInteractable)
 		{
 			Execute_SetIsInteractable(this, true);
+			LeverAudioComponent->SetBoolParameter("Play_LeverUp", true);
+			LeverAtStartingPoint();
 		}
-		
-		LeverAtStartingPoint();
 		
 		if (!bIsBeingHeld && !CVarLeverTest.GetValueOnGameThread())
 		{

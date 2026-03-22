@@ -29,6 +29,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 		TObjectPtr<USphereComponent> TriggerSphereOverlapComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+		TObjectPtr<UAudioComponent> ButtonAudioComponent;
 		
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Size")
 		EHeistSize CurrentSize;
