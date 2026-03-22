@@ -33,6 +33,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		TObjectPtr<UAudioComponent> ValveAudioComponent;
 	
+	UPROPERTY(BlueprintReadOnly, Category="Progress")
+		bool bIsValveSoundPlaying;
+	
+	FTimerHandle ValveTurningTimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
+		float CheckForPlaySoundEverySeconds;
+	
+	
+	UPROPERTY(BlueprintReadOnly, Category="Progress")
+		float SoundProgressInSeconds;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
+		float SoundProgressAddition;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
+		float SoundDurationTotal;
+	
+	UFUNCTION(BlueprintCallable, Category="Progress")
+		void StartValveSound();
+	
+	UFUNCTION(BlueprintCallable, Category="Progress")
+		void StopValveSound();
+	
 	// 0 is not turned at all, 1 is full turned. (InitialOffRotationRoll -> TargetFullRotationRoll)
 	UFUNCTION(BlueprintCallable, Category="Progress")
 		float GetProgressNormalized() const;

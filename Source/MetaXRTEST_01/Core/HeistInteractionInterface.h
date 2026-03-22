@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		UPhysicsConstraintComponent* GetPhysicsConstraintComp();
 	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
+		void Reset_To_Checkpoint();
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 		void ObjectSlowedDown();
 	

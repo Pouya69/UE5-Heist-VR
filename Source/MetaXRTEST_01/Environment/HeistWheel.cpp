@@ -47,6 +47,7 @@ AHeistWheel::AHeistWheel()
 	ProgressResetSpeed = 60.0f;
 	InterpToPlayerHandSpeed = 100.0f;
 	HandRotationThresholdToMove = 0.6f;
+	CheckForPlaySoundEverySeconds = 1.0f;
 	
 	CheckForPlayerEverySecondsForStopTick = 2.0f;
 	
@@ -55,11 +56,35 @@ AHeistWheel::AHeistWheel()
 	
 	ValveAudioComponent = CreateDefaultSubobject<UAudioComponent>("ValveAudioComp");
 	ValveAudioComponent->SetupAttachment(BaseMeshComponent);
+	
+	SoundDurationTotal = 13.778104;
+	SoundProgressAddition = 1.0f;
 }
 
 void AHeistWheel::ChangeLinkedActor(AActor* NewLinkedActor)
 {
 	LinkedActor = NewLinkedActor;
+}
+
+void AHeistWheel::StartValveSound()
+{
+	if (bIsValveSoundPlaying) return;
+	SoundProgressInSeconds += SoundProgressAddition;
+	if (SoundProgressInSeconds >= SoundDurationTotal)
+		SoundProgressInSeconds = SoundDurationTotal - SoundProgressInSeconds;
+	
+	bIsValveSoundPlaying = true;
+	ValveAudioComponent->SetBoolParameter("OnTurnStart", true);
+	ValveAudioComponent->SetFloatParameter("StartTime", SoundProgressInSeconds);
+	GetWorldTimerManager().SetTimer(ValveTurningTimerHandle, this, &AHeistWheel::StopValveSound, CheckForPlaySoundEverySeconds, false);
+}
+
+void AHeistWheel::StopValveSound()
+{
+	if (!bIsValveSoundPlaying) return;
+	
+	bIsValveSoundPlaying = false;
+	ValveAudioComponent->SetBoolParameter("OnTurnStop", true);
 }
 
 float AHeistWheel::GetProgressNormalized() const
@@ -128,6 +153,7 @@ void AHeistWheel::Custom_Tick_Implementation(const float& DeltaTime, const UHeis
 		const FRotator FinalRotation = FRotator(0.0f, 0, CurrentRotationRoll);
 	
 		WheelMeshComponent->SetRelativeRotation(FinalRotation);
+		StartValveSound();
 	}
 	
 	
@@ -247,7 +273,6 @@ void AHeistWheel::Tick(float DeltaTime)
 	
 	const float ProgressNormalized = GetProgressNormalized();
 	
-	
 	// 
 	
 	
@@ -313,7 +338,7 @@ void AHeistWheel::Tick(float DeltaTime)
 		if (!bIsBeingHeld && !CVarWheelTest.GetValueOnGameThread())
 		{
 			SetActorTickEnabled(false);
-			ValveAudioComponent->SetBoolParameter("OnTurnStop", true);
+			StopValveSound();
 			GrabComponent->SetComponentTickEnabled(false);
 		}
 		
@@ -326,8 +351,13 @@ void AHeistWheel::Tick(float DeltaTime)
 	{
 		if (bShouldGoBackToInitialPositionWhenNotHeld)
 		{
+			StartValveSound();
 			CurrentRotationRoll = FMath::FInterpConstantTo(CurrentRotationRoll, InitialOffRotationRoll, DeltaTime, ProgressResetSpeed);
 			WheelMeshComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentRotationRoll), false);
+		}
+		else
+		{
+			StopValveSound();
 		}
 		return;
 	}
@@ -343,7 +373,6 @@ void AHeistWheel::OnWheelGrabbed(UHeistGrabComponent* GrabbedComponent,
 	GrabComponent->SetComponentTickEnabled(true);
 	
 	IHeistInteractionInterface::Execute_SetIsInFocus(LinkedActor, true);
-	ValveAudioComponent->SetBoolParameter("OnTurnStart", true);
 	
 	
 	if (GrabComponent->GetHeldByHand(MotionControllerRef) == EControllerHand::Left)

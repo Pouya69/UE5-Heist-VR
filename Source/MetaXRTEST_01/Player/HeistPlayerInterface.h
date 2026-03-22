@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "HeistPlayerInterface.generated.h"
 
+class ASizeChangeMachine;
 class UCameraComponent;
 enum class EHeistEquipmentType : uint8;
 struct FPlayerChangeSizeInfo;
@@ -33,6 +34,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void ShowVacuumTutorial();
+	
+	// CheckpointActor HAS TO IMPLEMENT Reset_To_Checkpoint
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void CameraFadeToBlackCheckpoint(AActor* CheckpointActor);
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void CameraFadeToBlackSizeChange(ASizeChangeMachine* SizeChangeMachineInteractedWith);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void TraceRightFinger();

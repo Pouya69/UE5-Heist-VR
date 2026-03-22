@@ -27,6 +27,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Size Change Machine")
 		bool ChangePlayerSize();
 	
+	UFUNCTION(BlueprintCallable, Category = "Size Change Machine")
+		bool ChangePlayerSizeCompleted();
+	
 	UPROPERTY(EditAnywhere, Category = "Size Change Machine")
 		EHeistSize MachinePlayerSizeChange;
 	

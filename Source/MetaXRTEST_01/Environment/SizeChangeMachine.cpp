@@ -188,9 +188,17 @@ bool ASizeChangeMachine::IsReadyToUseSizeMachine() const
 
 bool ASizeChangeMachine::ChangePlayerSize()
 {
-	UGameplayStatics::PlaySound2D(this, ChangeSizeSound);
 	
 	Machine_SK_Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	IHeistPlayerInterface::Execute_CameraFadeToBlackSizeChange(UGameplayStatics::GetPlayerPawn(this, 0), this);
+	// const bool bSuccess = IHeistPlayerInterface::Execute_ChangeSize(UGameplayStatics::GetPlayerPawn(this, 0), MachinePlayerSizeChange, GetNewPlayerLocationAfterTeleport());
+	return true;
+}
+
+bool ASizeChangeMachine::ChangePlayerSizeCompleted()
+{
+	UGameplayStatics::PlaySound2D(this, ChangeSizeSound);
 	
 	const bool bSuccess = IHeistPlayerInterface::Execute_ChangeSize(UGameplayStatics::GetPlayerPawn(this, 0), MachinePlayerSizeChange, GetNewPlayerLocationAfterTeleport());
 	return bSuccess;
