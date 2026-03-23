@@ -6,8 +6,10 @@
 #include "Core/HeistFunctionLibrary.h"
 #include "Core/HeistGameMode.h"
 #include "Core/HeistTypes.h"
+#include "Environment/HeistWheel.h"
 #include "Environment/Core/HeistGrabComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "Player/HeistMotionControllerComponent.h"
 #include "Player/HeistPlayerInterface.h"
 
@@ -100,20 +102,16 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	
 	if (bIsRemoteGrabbable)
 	{
-		MainPrimitiveComp->SetSimulatePhysics(bActive);
-		
-		//if (bIsTiny)
-		//{
-		//	MainPrimitiveComp->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
-		//}
-		
-		MainPrimitiveComp->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
-		
-		FVector NewObjectVelocity = MainPrimitiveComp->GetComponentVelocity();
-		FVector NewObjectAngularVelocity = MainPrimitiveComp->GetPhysicsAngularVelocityInRadians();
-	
-		switch (NewPlayerSize)
+		if (bActive)
 		{
+			MainPrimitiveComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			MainPrimitiveComp->SetSimulatePhysics(true);
+			
+			FVector NewObjectVelocity = MainPrimitiveComp->GetComponentVelocity();
+			FVector NewObjectAngularVelocity = MainPrimitiveComp->GetPhysicsAngularVelocityInRadians();
+	
+			switch (NewPlayerSize)
+			{
 			default:
 				break;
 				
@@ -126,10 +124,29 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 				NewObjectAngularVelocity *= 0.001f;
 				NewObjectVelocity *= 0.001f;
 				break;
+			}
+		
+			MainPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+		}
+		else
+		{
+			MainPrimitiveComp->SetSimulatePhysics(false);
+			MainPrimitiveComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			
+			MainPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 		}
 		
-		MainPrimitiveComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
-		MainPrimitiveComp->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+		
+		//if (bIsTiny)
+		//{
+		//	MainPrimitiveComp->SetCollisionEnabled(bActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+		//}
+		
+		
+		
+		
 		
 		/*
 		FTimerDelegate TimerDelegate;
@@ -181,6 +198,13 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	}
 	
 	ToggleActivateGrabbable(bActive);
+	
+	if (!this->IsA(AHeistWheel::StaticClass()))
+	{
+		MainPrimitiveComp->GetBodySetup()->CreatePhysicsMeshes();
+		MainPrimitiveComp->RecreatePhysicsState();
+		MainPrimitiveComp->RecreatePhysicsState();
+	}
 }
 
 void AGrabbable::ToggleActivateGrabbable(const bool bActive)

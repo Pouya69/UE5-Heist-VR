@@ -8,6 +8,7 @@
 #include "Core/HeistGrabComponent.h"
 #include "Core/HeistTypes.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "Player/HeistMotionControllerComponent.h"
 #include "Player/HeistPlayerInterface.h"
 
@@ -211,6 +212,16 @@ void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		BaseMeshComponent->SetSimulatePhysics(false);
 		WheelMeshComponent->SetSimulatePhysics(false);
 	}
+	/*
+	HandleMeshComponent->GetBodySetup()->CreatePhysicsMeshes();
+	HandleMeshComponent->RecreatePhysicsState();
+	
+	BaseMeshComponent->GetBodySetup()->CreatePhysicsMeshes();
+	BaseMeshComponent->RecreatePhysicsState();
+	
+	WheelMeshComponent->GetBodySetup()->CreatePhysicsMeshes();
+	WheelMeshComponent->RecreatePhysicsState();
+	*/
 }
 
 void AHeistWheel::Interact_Implementation()
