@@ -184,9 +184,8 @@ void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		bIsRemoteGrabbable = false;
 	
 	Super::OnPlayerChangeSize(NewPlayerSize);
+	
 	const bool bActive = CurrentSize == NewPlayerSize;
-	BaseMeshComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
-	BaseMeshComponent->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 	if (!LinkedActor)
 	{
 		if (bActive)
@@ -198,12 +197,14 @@ void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		}
 		else
 		{
-			BaseMeshComponent->SetSimulatePhysics(false);
 			BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			HandleMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			WheelMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
+	BaseMeshComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	BaseMeshComponent->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+	BaseMeshComponent->SetSimulatePhysics(false);  // Will set it back in BP.
 	BaseMeshComponent->SetVisibility(bActive, true);
 	
 	if (LinkedActor)
@@ -212,6 +213,17 @@ void AHeistWheel::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 		BaseMeshComponent->SetSimulatePhysics(false);
 		WheelMeshComponent->SetSimulatePhysics(false);
 	}
+	/*
+	if (!bHasFirstTimeTinyCome && NewPlayerSize == EHeistSize::TINY && CurrentSize == EHeistSize::TINY)
+	{
+		WheelMeshComponent->SetStaticMesh(SmallMesh);
+		bHasFirstTimeTinyCome = true;
+		
+		WheelMeshComponent->GetBodySetup()->CreatePhysicsMeshes();
+		WheelMeshComponent->RecreatePhysicsState();
+		WheelMeshComponent->RecreatePhysicsState();
+	}
+	*/
 	/*
 	HandleMeshComponent->GetBodySetup()->CreatePhysicsMeshes();
 	HandleMeshComponent->RecreatePhysicsState();

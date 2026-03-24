@@ -47,6 +47,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		float SoundProgressAddition;
 	
+	
+	bool bHasFirstTimeTinyCome = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Size")
+		TObjectPtr<UStaticMesh> SmallMesh;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Size")
+		TObjectPtr<UStaticMesh> NormalMesh;
+	
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Progress")
 		float SoundDurationTotal;
 	

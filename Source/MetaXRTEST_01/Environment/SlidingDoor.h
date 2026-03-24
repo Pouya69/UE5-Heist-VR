@@ -53,7 +53,9 @@ protected:
 	
 	FVector BaseLocationOffsetFromHandle;
 	FVector BaseLocationOffsetFromHandle2;
-	FVector InitialDoorLocation;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Slide")
+		FVector InitialDoorLocation;
 	
 	UPROPERTY(EditInstanceOnly, Category = "Constraints")
 		TObjectPtr<AActor> LinkedConstraintActor;

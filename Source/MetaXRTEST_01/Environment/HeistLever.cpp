@@ -102,6 +102,7 @@ void AHeistLever::ToggleLeverEnabled(const bool bEnabled, const bool bReset)
 		BaseMeshComponent->SetVisibility(false, true);
 		BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	bIsGrabbableActive = bEnabled;
 }
 
 void AHeistLever::OnPlayerChangeSize(EHeistSize NewPlayerSize)
