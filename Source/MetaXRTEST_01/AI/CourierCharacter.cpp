@@ -9,7 +9,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/HeistPlayerInterface.h"
 
-#include "MotionWarpingComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -22,8 +21,6 @@ ACourierCharacter::ACourierCharacter()
 	ObstacleCheckRadius = 20.0f;
 	
 	ObstaclePushAwayForce = 50000.0f;
-	
-	MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpComp");
 	
 	bIsInDefaultCutsceneActions = true;
 	

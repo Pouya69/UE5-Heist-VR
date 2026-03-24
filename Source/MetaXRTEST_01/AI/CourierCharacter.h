@@ -85,9 +85,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Movement")
 		float BaseMovementSpeed;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-		TObjectPtr<UMotionWarpingComponent> MotionWarpComponent;
-	
 	UPROPERTY(EditDefaultsOnly, Category = "Obstacle")
 		TObjectPtr<UAnimMontage> AttackObstacleMontage;
 	
