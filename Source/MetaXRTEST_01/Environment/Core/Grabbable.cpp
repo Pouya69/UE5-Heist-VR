@@ -100,7 +100,7 @@ void AGrabbable::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	
 	UPrimitiveComponent* MainPrimitiveComp = GetMainPrimitiveComponent();
 	
-	if (bIsRemoteGrabbable)
+	if (bCanChangeSize)
 	{
 		if (bActive)
 		{

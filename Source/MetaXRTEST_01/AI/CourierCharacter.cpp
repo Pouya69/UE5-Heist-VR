@@ -172,10 +172,9 @@ void ACourierCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (CurrentSize != EHeistSize::TINY || !GetCharacterMovement()->IsFalling()) return;
-	
 	FVector MyVelocity = GetCharacterMovement()->Velocity;
 	MyVelocity.Z -= 980000.0f;
-	// UE_LOG(LogTemp, Warning, TEXT("Move Velocity: %f"), MyVelocity.Z);
+	UE_LOG(LogTemp, Warning, TEXT("Move Velocity: %f"), MyVelocity.Z);
 	
 	GetCharacterMovement()->Velocity = MyVelocity;
 	
