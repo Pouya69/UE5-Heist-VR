@@ -10,6 +10,7 @@
 #include "Player/HeistPlayerInterface.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -25,6 +26,9 @@ ACourierCharacter::ACourierCharacter()
 	bIsInDefaultCutsceneActions = true;
 	
 	CurrentSize = EHeistSize::MEDIUM;
+	
+	CourierDefaultSoundsAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CourierAudioComp"));
+	CourierDefaultSoundsAudioComponent->SetupAttachment(GetMesh(), "Head");
 }
 
 void ACourierCharacter::SetCutsceneAlpha(float NewAlpha)
@@ -39,6 +43,8 @@ void ACourierCharacter::SetLookAtPlayerAlpha(float NewAlpha)
 
 void ACourierCharacter::InterruptedCutscene_Implementation(const bool bEndCurrentCutscene)
 {
+	CourierDefaultSoundsAudioComponent->Stop();
+	
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	
 	CourierControllerRef->GetBlackboardComponent()->SetValueAsBool("Is In Cutscene", true);
@@ -118,6 +124,7 @@ void ACourierCharacter::ObjectSlowedDown_Implementation()
 	{
 		// Not in cutscene.
 	}
+	// CourierDefaultSoundsAudioComponent->SetPitchMultiplier(0.1f);
 }
 
 void ACourierCharacter::ObjectOutOfSlowMotion_Implementation()
@@ -131,6 +138,7 @@ void ACourierCharacter::ObjectOutOfSlowMotion_Implementation()
 	{
 		// Not in cutscene.
 	}
+	// CourierDefaultSoundsAudioComponent->SetPitchMultiplier(1.0f);
 }
 
 bool ACourierCharacter::IsGrabbable_Implementation(const FName BoneHit) const

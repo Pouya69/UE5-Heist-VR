@@ -17,12 +17,19 @@ class METAXRTEST_01_API ACourierCharacter : public ACharacter, public IHeistInte
 	GENERATED_BODY()
 
 public:
+	ACourierCharacter();
+	
+	// For default sounds like grunts, anim-linked sounds and non-cutscene sounds.
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Components")
+		TObjectPtr<UAudioComponent> CourierDefaultSoundsAudioComponent;
+	
 	// For things that are controlled in the State Machine and not just Anim Montages or LSQs
 	// By default it should be true for the start for when courier is in hallway door.
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="References")
 		bool bIsInDefaultCutsceneActions;
 	
-	ACourierCharacter();
+	UPROPERTY(BlueprintReadWrite, Category="References")
+		bool bHasFinishedFirstCutscene;
 	
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="References")
 		APawn* PlayerPawnRef;
