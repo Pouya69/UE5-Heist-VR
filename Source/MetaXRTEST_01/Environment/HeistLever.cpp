@@ -95,6 +95,7 @@ void AHeistLever::ToggleLeverEnabled(const bool bEnabled, const bool bReset)
 		BaseMeshComponent->SetVisibility(true, true);
 		BaseMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		LeverLightStatus(false);
+		Execute_SetIsInteractable(this, true);
 	}
 	else
 	{
@@ -114,8 +115,14 @@ void AHeistLever::OnPlayerChangeSize(EHeistSize NewPlayerSize)
 	{
 		BaseMeshComponent->SetSimulatePhysics(bActive);
 	}
+	else if (bActive)
+	{
+		ToggleLeverEnabled(true, false);
+	}
 	if (!bIsConnectedToAnotherActor)
 		BaseMeshComponent->SetVisibility(bActive, true);
+	
+	
 }
 
 bool AHeistLever::GetIsInteractable_Implementation() const

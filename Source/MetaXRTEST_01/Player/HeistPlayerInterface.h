@@ -33,6 +33,9 @@ public:
 		void ShowSizeMachineTutorial();
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
+		void ShowEndingCredits();
+	
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Player Interface")
 		void ShowVacuumTutorial();
 	
 	// CheckpointActor HAS TO IMPLEMENT Reset_To_Checkpoint

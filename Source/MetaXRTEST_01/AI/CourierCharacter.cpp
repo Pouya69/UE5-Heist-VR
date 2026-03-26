@@ -115,7 +115,7 @@ void ACourierCharacter::AttackObstacle()
 
 void ACourierCharacter::ObjectSlowedDown_Implementation()
 {
-	if (CurrentCutscenePlaying && CurrentCutscenePlaying->GetSequencePlayer()->IsPlaying())
+	if (CurrentCutscenePlaying)
 	{
 		// Slow down the cutscene only.
 		CurrentCutscenePlaying->GetSequencePlayer()->SetPlayRate(0.1f);
@@ -129,7 +129,7 @@ void ACourierCharacter::ObjectSlowedDown_Implementation()
 
 void ACourierCharacter::ObjectOutOfSlowMotion_Implementation()
 {
-	if (CurrentCutscenePlaying && CurrentCutscenePlaying->GetSequencePlayer()->IsPlaying())
+	if (CurrentCutscenePlaying)
 	{
 		// Slow down the cutscene only.
 		CurrentCutscenePlaying->GetSequencePlayer()->SetPlayRate(1.0f);

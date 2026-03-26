@@ -137,7 +137,7 @@ void AHeistButton::OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent,
 	bool bCanDeactivate = true;
 	for (const UPrimitiveComponent* OverlappedComp : OverlappedComponents)
 	{
-		if (OverlappedComp->GetOwner()->IsA(APawn::StaticClass()) || OverlappedComp->GetMass() >= MinimumMass)
+		if (OverlappedComp->GetOwner()->IsA(APawn::StaticClass()) || OverlappedComp->GetMass() >= MinimumMass || OverlappedComp->GetOwner()->ActorHasTag("Power"))
 		{
 			bCanDeactivate = false;
 			break;
