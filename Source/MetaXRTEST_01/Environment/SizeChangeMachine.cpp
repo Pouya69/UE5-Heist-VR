@@ -290,8 +290,17 @@ void ASizeChangeMachine::Custom_Tick_Implementation(const float& DeltaTime, cons
 		
 		bIsLeftHandReady = FMath::IsNearlyEqual(LeftSplineNormalizeProgress, 1.0f);
 		
-		ControllerTransformRelativeToGrabComp.SetTranslation(LeftHandFinalLocation + GrabOffset);
-		ControllerTransformRelativeToGrabComp.SetRotation(FQuat::MakeFromEuler(GrabOffsetRotation));
+		FVector OffsetLocationFinal = GrabOffset;
+		const bool bIsLeftHandController = ControllerRef->MotionSource.IsEqual("Left");
+		
+		if (bIsLeftHandController)
+			OffsetLocationFinal.Y *= -1.0f;
+			
+		ControllerTransformRelativeToGrabComp.SetTranslation(LeftHandFinalLocation + OffsetLocationFinal);
+		
+		ControllerTransformRelativeToGrabComp.SetRotation(
+				FQuat::MakeFromEuler(bIsLeftHandController ? GrabOffsetRotation + FVector(0,180,0) : GrabOffsetRotation)
+		);
 		
 		ControllerRef->PhysicsHandRef->SetWorldTransform(ControllerTransformRelativeToGrabComp);
 		
@@ -312,7 +321,12 @@ void ASizeChangeMachine::Custom_Tick_Implementation(const float& DeltaTime, cons
 		bIsRightHandReady = FMath::IsNearlyEqual(RightSplineNormalizeProgress, 1.0f);
 		
 		ControllerTransformRelativeToGrabComp.SetTranslation(RightHandFinalLocation + GrabOffset);
-		ControllerTransformRelativeToGrabComp.SetRotation(FQuat::MakeFromEuler(GrabOffsetRotation));
+		
+		const bool bIsLeftHandController = ControllerRef->MotionSource.IsEqual("Left");
+		
+		ControllerTransformRelativeToGrabComp.SetRotation(
+				FQuat::MakeFromEuler(bIsLeftHandController ? GrabOffsetRotation + FVector(0,180,0) : GrabOffsetRotation)
+		);
 		
 		ControllerRef->PhysicsHandRef->SetWorldTransform(ControllerTransformRelativeToGrabComp);
 	}
